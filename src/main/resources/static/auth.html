@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi" data-bs-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>E-Learning – Auth</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <nav
+      class="navbar navbar-expand-lg bg-body-tertiary border-bottom sticky-top"
+    >
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="#/login">E-Learning</a>
+        <div class="ms-auto d-flex gap-2">
+          <a id="navLogin" class="btn btn-link" href="#/login">Đăng nhập</a>
+          <a id="navRegister" class="btn btn-link" href="#/register">Đăng ký</a>
+          <a id="navMe" class="btn btn-link d-none" href="#/me">Hồ sơ</a>
+          <button id="btnLogout" class="btn btn-outline-danger d-none">
+            Đăng xuất
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container py-4">
+      <!-- Toast -->
+      <div class="position-fixed top-0 end-0 p-3" style="z-index: 1080">
+        <div
+          id="toast"
+          class="toast text-bg-danger border-0"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          <div class="d-flex">
+            <div id="toastMsg" class="toast-body">Có lỗi xảy ra</div>
+            <button
+              class="btn-close btn-close-white me-2 m-auto"
+              data-bs-dismiss="toast"
+            ></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOGIN -->
+      <section id="view-login" class="view d-none">
+        <div class="row justify-content-center">
+          <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+              <div class="card-body p-4">
+                <h3 class="mb-3">Đăng nhập</h3>
+                <form id="formLogin" novalidate>
+                  <div class="mb-3">
+                    <label class="form-label">Tên đăng nhập</label>
+                    <input
+                      id="loginUsername"
+                      class="form-control"
+                      minlength="3"
+                      maxlength="64"
+                      required
+                    />
+                    <div class="invalid-feedback">Username từ 3–64 ký tự.</div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Mật khẩu</label>
+                    <input
+                      id="loginPassword"
+                      type="password"
+                      class="form-control"
+                      minlength="6"
+                      required
+                    />
+                    <div class="invalid-feedback">Tối thiểu 6 ký tự.</div>
+                  </div>
+                  <button class="btn btn-primary w-100" type="submit">
+                    <span
+                      id="loginSpinner"
+                      class="spinner-border spinner-border-sm me-2 d-none"
+                    ></span>
+                    Đăng nhập
+                  </button>
+                </form>
+
+                <hr />
+                <p class="mb-0">
+                  Chưa có tài khoản? <a href="#/register">Đăng ký ngay</a>
+                </p>
+
+                <div id="loginResult" class="alert alert-secondary mt-3 d-none">
+                  <div class="fw-semibold mb-1">Kết quả:</div>
+                  <pre id="loginResultJson" class="mb-0 small">{}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REGISTER -->
+      <section id="view-register" class="view d-none">
+        <div class="row justify-content-center">
+          <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+              <div class="card-body p-4">
+                <h3 class="mb-3">Tạo tài khoản</h3>
+                <form id="formRegister" novalidate>
+                  <div class="mb-3">
+                    <label class="form-label">Tên đăng nhập</label>
+                    <input
+                      id="regUsername"
+                      class="form-control"
+                      minlength="3"
+                      maxlength="64"
+                      required
+                    />
+                    <div class="invalid-feedback">Username từ 3–64 ký tự.</div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Mật khẩu</label>
+                    <input
+                      id="regPassword"
+                      type="password"
+                      class="form-control"
+                      minlength="6"
+                      required
+                    />
+                    <div class="invalid-feedback">Tối thiểu 6 ký tự.</div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Họ và tên (tuỳ chọn)</label>
+                    <input
+                      id="regFullName"
+                      class="form-control"
+                      maxlength="255"
+                      placeholder="Ví dụ: Nguyễn Văn A"
+                    />
+                  </div>
+                  <button class="btn btn-success w-100" type="submit">
+                    <span
+                      id="regSpinner"
+                      class="spinner-border spinner-border-sm me-2 d-none"
+                    ></span>
+                    Đăng ký
+                  </button>
+                </form>
+
+                <hr />
+                <p class="mb-0">
+                  Đã có tài khoản? <a href="#/login">Đăng nhập</a>
+                </p>
+
+                <div
+                  id="registerResult"
+                  class="alert alert-secondary mt-3 d-none"
+                >
+                  <div class="fw-semibold mb-1">Kết quả:</div>
+                  <pre id="registerResultJson" class="mb-0 small">{}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ME -->
+      <section id="view-me" class="view d-none">
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <div class="card shadow-sm">
+              <div class="card-body p-4">
+                <h3 class="mb-3">Hồ sơ</h3>
+
+                <div id="meLoading" class="text-center my-4 d-none">
+                  <div class="spinner-border"></div>
+                  <div>Đang tải…</div>
+                </div>
+
+                <div id="meContent" class="d-none">
+                  <dl class="row">
+                    <dt class="col-sm-3">User ID</dt>
+                    <dd class="col-sm-9" id="meId">—</dd>
+                    <dt class="col-sm-3">Username</dt>
+                    <dd class="col-sm-9" id="meUsername">—</dd>
+                    <dt class="col-sm-3">Họ tên</dt>
+                    <dd class="col-sm-9" id="meFullName">—</dd>
+                    <dt class="col-sm-3">Role</dt>
+                    <dd class="col-sm-9">
+                      <span id="meRole" class="badge text-bg-info">—</span>
+                    </dd>
+                  </dl>
+
+                  <div class="alert alert-secondary mt-3">
+                    <div class="fw-semibold mb-1">Response /me:</div>
+                    <pre id="meResultJson" class="mb-0 small">{}</pre>
+                  </div>
+
+                  <a href="#/login" class="btn btn-outline-secondary"
+                    >Quay lại</a
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="text-center small text-secondary py-4">
+      © <span id="year"></span> E-Learning.
+    </footer>
+
+    <script>
+      window.API_BASE = ""; // Same origin
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/auth.js"></script>
+  </body>
+</html>

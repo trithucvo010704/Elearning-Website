@@ -1,0 +1,4 @@
+body { min-height: 100vh; }
+.card { border-radius: 14px; }
+.view.d-none { display: none !important; }
+pre { white-space: pre-wrap; word-break: break-word; }
