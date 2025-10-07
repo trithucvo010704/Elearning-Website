@@ -12,3 +12,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-this-very-long-secret-string-1234567890} # >= 32 bytes
+    expirySeconds: 86400
