@@ -15,10 +15,8 @@ import java.time.LocalDateTime;                                              // 
         indexes = { @Index(name = "idx_webhook_processed", columnList = "processed, created_at") } // xử lý hàng đợi
 )
 public class WebhookEvent extends BaseEntity {                                 // entity kế thừa BaseEntity
-
-    @Id                                                                          // khóa chính
-    @GeneratedValue(strategy = GenerationType.IDENTITY)                          // auto-increment
-    private Long id;                                                             // cột id
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Enumerated(EnumType.STRING)                                                 // enum STRING
     @Column(nullable = false, length = 16)                                       // cột provider

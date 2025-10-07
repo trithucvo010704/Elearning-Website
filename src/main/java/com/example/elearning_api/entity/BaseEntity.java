@@ -1,8 +1,6 @@
 package com.example.elearning_api.entity;
-import jakarta.persistence.Column;        // import annotation cột
-import jakarta.persistence.MappedSuperclass; // để kế thừa mapping
-import jakarta.persistence.PrePersist;    // hook trước khi insert
-import jakarta.persistence.PreUpdate;     // hook trước khi update
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;           // kiểu thời gian
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +9,11 @@ import lombok.Setter;
 @Setter
 @MappedSuperclass // đánh dấu lớp cha cho các entity khác kế thừa
 public class BaseEntity {
+    // FK tự sinh
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     @Column(name="created_at",nullable = false,updatable = false) // map voi cot Created_at
     private LocalDateTime createdAt; // Ngay khoi tao
     @Column(name = "updated_at", nullable = false) // map cột updated_at

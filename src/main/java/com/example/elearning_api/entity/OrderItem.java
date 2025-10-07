@@ -14,9 +14,6 @@ import lombok.Setter;
 )
 public class OrderItem extends BaseEntity {                            // entity kế thừa BaseEntity
 
-    @Id                                                                 // khóa chính
-    @GeneratedValue(strategy = GenerationType.IDENTITY)                 // auto-increment
-    private Long id;                                                    // cột id
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)                // nhiều item thuộc 1 order
     @JoinColumn(name = "order_id", nullable = false,                    // map FK order_id

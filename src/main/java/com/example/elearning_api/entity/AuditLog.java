@@ -15,9 +15,6 @@ import lombok.Setter;
 )
 public class AuditLog extends BaseEntity {
 
-    @Id                                                                          // khóa chính
-    @GeneratedValue(strategy = GenerationType.IDENTITY)                          // auto-increment
-    private Long id;                                                             // cột id
 
     @ManyToOne(fetch = FetchType.LAZY)                                           // actor có thể null (system)
     @JoinColumn(name = "actor_user_id", foreignKey = @ForeignKey(name = "fk_audit_actor")) // FK actor

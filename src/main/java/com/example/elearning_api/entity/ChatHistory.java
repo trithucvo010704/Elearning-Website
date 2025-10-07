@@ -17,9 +17,6 @@ import lombok.Setter;
 )
 public class ChatHistory extends BaseEntity {                                 // entity kế thừa BaseEntity
 
-    @Id                                                                         // khóa chính
-    @GeneratedValue(strategy = GenerationType.IDENTITY)                         // auto-increment
-    private Long id;                                                            // cột id
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)                        // thuộc user
     @JoinColumn(name = "user_id", nullable = false,                             // map FK user_id
