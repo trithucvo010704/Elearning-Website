@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="vi" data-bs-theme="dark">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>E-Learning – Course Management</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    }
+
+    body {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .navbar {
+      background: rgba(255, 255, 255, 0.1) !important;
+      backdrop-filter: blur(10px);
+      border: none !important;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      font-size: 1.5rem;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .main-container {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      margin: 2rem auto;
+      padding: 2rem;
+    }
+
+    .page-header {
+      background: var(--primary-gradient);
+      border-radius: 15px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      color: white;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0px) rotate(0deg);
+      }
+
+      50% {
+        transform: translateY(-20px) rotate(180deg);
+      }
+    }
+
+    .page-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .page-subtitle {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 1.5rem;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--primary-gradient);
+    }
+
+    .stat-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .course-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .course-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .course-thumbnail {
+      height: 200px;
+      background: var(--primary-gradient);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .course-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .course-card:hover .course-thumbnail img {
+      transform: scale(1.1);
+    }
+
+    .course-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .course-card:hover .course-overlay {
+      opacity: 1;
+    }
+
+    .course-status {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .status-published {
+      background: rgba(40, 167, 69, 0.9);
+      color: white;
+    }
+
+    .status-draft {
+      background: rgba(255, 193, 7, 0.9);
+      color: #000;
+    }
+
+    .status-archived {
+      background: rgba(108, 117, 125, 0.9);
+      color: white;
+    }
+
+    .course-content {
+      padding: 1.5rem;
+    }
+
+    .course-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 0.5rem;
+      line-height: 1.3;
+    }
+
+    .course-description {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .course-price {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #4facfe;
+      margin-bottom: 1rem;
+    }
+
+    .course-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-action {
+      flex: 1;
+      min-width: 120px;
+      border-radius: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+      border: none;
+      padding: 0.6rem 1rem;
+    }
+
+    .btn-primary-action {
+      background: var(--primary-gradient);
+      color: white;
+    }
+
+    .btn-primary-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      color: white;
+    }
+
+    .btn-secondary-action {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-secondary-action:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .btn-danger-action {
+      background: var(--warning-gradient);
+      color: white;
+    }
+
+    .btn-danger-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
+      color: white;
+    }
+
+    .create-course-btn {
+      background: var(--success-gradient);
+      border: none;
+      border-radius: 15px;
+      padding: 1rem 2rem;
+      font-weight: 700;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 20px rgba(79, 172, 254, 0.3);
+    }
+
+    .create-course-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(79, 172, 254, 0.4);
+      background: var(--success-gradient);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .modal-content {
+      background: rgba(30, 30, 30, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+    }
+
+    .modal-header {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--primary-gradient);
+      color: white;
+      border-radius: 20px 20px 0 0;
+    }
+
+    .modal-title {
+      font-weight: 700;
+    }
+
+    .form-control,
+    .form-select {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: #667eea;
+      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+      color: white;
+    }
+
+    .form-control::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .form-label {
+      color: white;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .btn-close {
+      filter: invert(1);
+    }
+
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+
+    .toast {
+      background: rgba(30, 30, 30, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .main-container {
+        margin: 1rem;
+        padding: 1rem;
+      }
+
+      .page-title {
+        font-size: 2rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .course-actions {
+        flex-direction: column;
+      }
+
+      .btn-action {
+        min-width: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="/">
+        <i class="fas fa-graduation-cap me-2"></i>
+        E-Learning
+      </a>
+      <div class="d-flex align-items-center">
+        <span class="text-white me-3" id="userInfo">
+          <i class="fas fa-user-circle me-1"></i>
+          <span id="userName">Loading...</span>
+        </span>
+        <button onclick="logout()" class="btn btn-outline-light">
+          <i class="fas fa-sign-out-alt me-1"></i>
+          Đăng xuất
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="main-container">
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1 class="page-title">
+          <i class="fas fa-book-open me-3"></i>
+          Quản Lý Khóa Học
+        </h1>
+        <p class="page-subtitle">
+          Tạo và quản lý các khóa học của bạn một cách chuyên nghiệp
+        </p>
+      </div>
+
+      <!-- Statistics -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-book"></i>
+          </div>
+          <div class="stat-number" id="totalCourses">0</div>
+          <div class="stat-label">Tổng Khóa Học</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-play-circle"></i>
+          </div>
+          <div class="stat-number" id="totalLessons">0</div>
+          <div class="stat-label">Tổng Bài Học</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-eye"></i>
+          </div>
+          <div class="stat-number" id="totalViews">0</div>
+          <div class="stat-label">Lượt Xem</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-dollar-sign"></i>
+          </div>
+          <div class="stat-number" id="totalRevenue">0đ</div>
+          <div class="stat-label">Doanh Thu</div>
+        </div>
+      </div>
+
+      <!-- Course Management -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-white mb-0">
+          <i class="fas fa-list me-2"></i>
+          Danh Sách Khóa Học
+        </h3>
+        <button class="btn create-course-btn" data-bs-toggle="modal" data-bs-target="#courseModal">
+          <i class="fas fa-plus me-2"></i>
+          Tạo Khóa Học Mới
+        </button>
+      </div>
+
+      <!-- Course List -->
+      <div id="courseList" class="row g-4">
+        <!-- Courses will be inserted here -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-icon">
+          <i class="fas fa-book-open"></i>
+        </div>
+        <h4>Chưa có khóa học nào</h4>
+        <p>Tạo khóa học đầu tiên của bạn để bắt đầu hành trình giảng dạy!</p>
+        <button class="btn create-course-btn mt-3" data-bs-toggle="modal" data-bs-target="#courseModal">
+          <i class="fas fa-plus me-2"></i>
+          Tạo Khóa Học Đầu Tiên
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Course Modal -->
+  <div class="modal fade" id="courseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-plus-circle me-2"></i>
+            Tạo Khóa Học Mới
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="courseForm">
+            <div class="row">
+              <div class="col-md-8">
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="fas fa-heading me-1"></i>
+                    Tiêu đề khóa học
+                  </label>
+                  <input type="text" name="title" class="form-control" placeholder="Nhập tiêu đề khóa học..."
+                    required />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="fas fa-align-left me-1"></i>
+                    Mô tả
+                  </label>
+                  <textarea name="description" class="form-control" rows="4" placeholder="Mô tả chi tiết về khóa học..."
+                    required></textarea>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="fas fa-dollar-sign me-1"></i>
+                    Giá (VND)
+                  </label>
+                  <input type="number" name="priceCents" class="form-control" placeholder="0" min="0" step="1000"
+                    required />
+                  <small class="text-muted">Nhập giá bằng VND (ví dụ: 500000 = 500,000 VND)</small>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="fas fa-coins me-1"></i>
+                    Tiền tệ
+                  </label>
+                  <select name="currency" class="form-select" required>
+                    <option value="VND">VND (Việt Nam Đồng)</option>
+                    <option value="USD">USD (US Dollar)</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="fas fa-image me-1"></i>
+                    Thumbnail URL
+                  </label>
+                  <input type="url" name="thumbnailUrl" class="form-control"
+                    placeholder="https://example.com/image.jpg" />
+                  <small class="text-muted">Link hình ảnh đại diện cho khóa học</small>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>
+            Hủy
+          </button>
+          <button type="button" class="btn btn-primary" onclick="submitCourse()">
+            <i class="fas fa-save me-1"></i>
+            Tạo Khóa Học
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lesson Modal -->
+  <div class="modal fade" id="lessonModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-play-circle me-2"></i>
+            Thêm Bài Học Mới
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="lessonForm">
+            <input type="hidden" name="courseId" />
+            <div class="row">
+              <div class="col-md-8">
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="fas fa-heading me-1"></i>
+                    Tiêu đề bài học
+                  </label>
+                  <input type="text" name="title" class="form-control" placeholder="Nhập tiêu đề bài học..." required />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="fab fa-youtube me-1"></i>
+                    YouTube Video ID
+                  </label>
+                  <input type="text" name="youtubeVideoId" class="form-control" placeholder="vtPkZShrvXQ" required />
+                  <small class="text-muted">Lấy từ URL YouTube:
+                    https://youtube.com/watch?v=<strong>vtPkZShrvXQ</strong></small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="fas fa-sort-numeric-up me-1"></i>
+                    Thứ tự
+                  </label>
+                  <input type="number" name="orderIndex" class="form-control" min="0" placeholder="0" required />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="fas fa-clock me-1"></i>
+                    Thời lượng (giây)
+                  </label>
+                  <input type="number" name="durationSec" class="form-control" min="1" placeholder="300" />
+                  <small class="text-muted">Ví dụ: 300 = 5 phút</small>
+                </div>
+                <div class="mb-3 form-check">
+                  <input type="checkbox" name="freePreview" class="form-check-input" id="freePreview" />
+                  <label class="form-check-label" for="freePreview">
+                    <i class="fas fa-eye me-1"></i>
+                    Cho phép xem thử miễn phí
+                  </label>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>
+            Hủy
+          </button>
+          <button type="button" class="btn btn-primary" onclick="submitLesson()">
+            <i class="fas fa-plus me-1"></i>
+            Thêm Bài Học
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video Preview Modal -->
+  <div class="modal fade" id="videoModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-play me-2"></i>
+            Xem Trước Video
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-0">
+          <div class="ratio ratio-16x9">
+            <iframe id="videoFrame" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lessons Modal -->
+  <div class="modal fade" id="lessonsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-list me-2"></i>
+            Danh Sách Bài Học
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="lessonsList">
+            <!-- Lessons will be inserted here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Course Modal -->
+  <div class="modal fade" id="editCourseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-edit me-2"></i>
+            Chỉnh Sửa Khóa Học
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editCourseForm">
+            <input type="hidden" name="courseId" />
+            <div class="row">
+              <div class="col-md-8">
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="fas fa-heading me-1"></i>
+                    Tiêu đề khóa học
+                  </label>
+                  <input type="text" name="title" class="form-control" placeholder="Nhập tiêu đề khóa học..."
+                    required />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="fas fa-align-left me-1"></i>
+                    Mô tả
+                  </label>
+                  <textarea name="description" class="form-control" rows="4" placeholder="Mô tả chi tiết về khóa học..."
+                    required></textarea>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="fas fa-dollar-sign me-1"></i>
+                    Giá (VND)
+                  </label>
+                  <input type="number" name="priceCents" class="form-control" placeholder="0" min="0" step="1000"
+                    required />
+                  <small class="text-muted">Nhập giá bằng VND (ví dụ: 500000 = 500,000 VND)</small>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="fas fa-coins me-1"></i>
+                    Tiền tệ
+                  </label>
+                  <select name="currency" class="form-select" required>
+                    <option value="VND">VND (Việt Nam Đồng)</option>
+                    <option value="USD">USD (US Dollar)</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="fas fa-image me-1"></i>
+                    Thumbnail URL
+                  </label>
+                  <input type="url" name="thumbnailUrl" class="form-control"
+                    placeholder="https://example.com/image.jpg" />
+                  <small class="text-muted">Link hình ảnh đại diện cho khóa học</small>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>
+            Hủy
+          </button>
+          <button type="button" class="btn btn-primary" onclick="submitEditCourse()">
+            <i class="fas fa-save me-1"></i>
+            Cập Nhật Khóa Học
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/courses.js"></script>
+</body>
+
+</html>
