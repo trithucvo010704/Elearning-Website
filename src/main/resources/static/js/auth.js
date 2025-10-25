@@ -58,23 +58,18 @@ async function api(path, { method = "GET", body, auth = true } = {}) {
 // ===== Router =====
 function route() {
   const h = (location.hash || "#/login").toLowerCase();
-  document.querySelectorAll(".view").forEach(hide);
-  const authed = !!getToken();
 
-  $("#btnLogout").classList.toggle("d-none", !authed);
-  $("#navMe").classList.toggle("d-none", !authed);
-  $("#navLogin").classList.toggle("d-none", authed);
-  $("#navRegister").classList.toggle("d-none", authed);
+  // Hide all views
+  document
+    .querySelectorAll(".view")
+    .forEach((v) => v.classList.remove("active"));
 
-  if (h.startsWith("#/me")) {
-    if (!authed) {
-      location.hash = "#/login";
-      return;
-    }
-    show($("#view-me"));
-    loadMe();
-  } else if (h.startsWith("#/register")) show($("#view-register"));
-  else show($("#view-login"));
+  // Show appropriate view
+  if (h.startsWith("#/register")) {
+    $("#view-register").classList.add("active");
+  } else {
+    $("#view-login").classList.add("active");
+  }
 }
 
 // ===== Events =====
@@ -100,13 +95,21 @@ async function onLogin(e) {
       auth: false,
     });
     if (resp.token) setToken(resp.token);
-    $("#loginResultJson").textContent = JSON.stringify(resp, null, 2);
-    show($("#loginResult"));
-    Toast("Đăng nhập thành công", "success");
-    location.hash = "#/me";
+    Toast("Đăng nhập thành công! Đang chuyển hướng...", "success");
+
+    // Auto redirect dựa trên role
+    const userRole = resp.user?.role;
+    setTimeout(() => {
+      if (userRole === "ADMIN") {
+        window.location.href = "/admin.html";
+      } else if (userRole === "INSTRUCTOR") {
+        window.location.href = "/courses.html";
+      } else {
+        // Student redirect về trang chủ
+        window.location.href = "/";
+      }
+    }, 1000);
   } catch (err) {
-    $("#loginResultJson").textContent = err.message || "Login failed";
-    show($("#loginResult"));
     Toast(err.message || "Login thất bại", "danger");
   } finally {
     hide($("#loginSpinner"));
@@ -137,51 +140,31 @@ async function onRegister(e) {
       auth: false,
     });
     if (resp.token) setToken(resp.token);
-    $("#registerResultJson").textContent = JSON.stringify(resp, null, 2);
-    show($("#registerResult"));
-    Toast("Đăng ký thành công", "success");
-    location.hash = "#/me";
+    Toast("Đăng ký thành công! Đang chuyển hướng...", "success");
+
+    // Auto redirect dựa trên role (mặc định STUDENT)
+    const userRole = resp.user?.role;
+    setTimeout(() => {
+      if (userRole === "ADMIN") {
+        window.location.href = "/admin.html";
+      } else if (userRole === "INSTRUCTOR") {
+        window.location.href = "/courses.html";
+      } else {
+        // Student redirect về trang chủ
+        window.location.href = "/";
+      }
+    }, 1000);
   } catch (err) {
-    $("#registerResultJson").textContent = err.message || "Register failed";
-    show($("#registerResult"));
     Toast(err.message || "Đăng ký thất bại", "danger");
   } finally {
     hide($("#regSpinner"));
   }
 }
 
-async function loadMe() {
-  hide($("#meContent"));
-  show($("#meLoading"));
-  try {
-    const resp = await api("/api/auth/me");
-    const user = resp.user || {};
-    $("#meId").textContent = user.id ?? "—";
-    $("#meUsername").textContent = user.username ?? "—";
-    $("#meFullName").textContent = user.fullName ?? "—";
-    $("#meRole").textContent = user.role ?? "—";
-    $("#meResultJson").textContent = JSON.stringify(resp, null, 2);
-    show($("#meContent"));
-  } catch (err) {
-    Toast(err.message || "Không tải được hồ sơ", "danger");
-    location.hash = "#/login";
-  } finally {
-    hide($("#meLoading"));
-  }
-}
-
-function onLogout() {
-  clearToken();
-  Toast("Đã đăng xuất", "info");
-  location.hash = "#/login";
-}
-
 // ===== Boot =====
 window.addEventListener("hashchange", route);
 window.addEventListener("DOMContentLoaded", () => {
-  $("#year").textContent = new Date().getFullYear();
-  $("#formLogin").addEventListener("submit", onLogin);
-  $("#formRegister").addEventListener("submit", onRegister);
-  $("#btnLogout").addEventListener("click", onLogout);
+  $("#formLogin")?.addEventListener("submit", onLogin);
+  $("#formRegister")?.addEventListener("submit", onRegister);
   route();
 });

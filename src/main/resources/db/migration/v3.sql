@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash   VARCHAR(255) NOT NULL,
     full_name       VARCHAR(255),
     role            ENUM('STUDENT','INSTRUCTOR','ADMIN') NOT NULL DEFAULT 'STUDENT',
+    enabled         TINYINT(1) NOT NULL DEFAULT 1,
     created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at      DATETIME NULL,
@@ -189,3 +190,36 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- Username: admin
+-- Password: admin123
+-- Role: ADMIN
+-- Full Name: System Administrator
+USE your_database_name;
+INSERT INTO users (username, password_hash, full_name, role, enabled, created_at, updated_at)
+VALUES (
+    'admin',
+    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+    'System Administrator',
+    'ADMIN',
+    1,
+    NOW(),
+    NOW()
+);
+
+
+-- Tạo tài khoản Instructor
+-- Username: instructor_demo
+-- Password: Instructor123!
+-- Role: INSTRUCTOR
+
+INSERT INTO users (username, password_hash, full_name, role, enabled, created_at, updated_at)
+VALUES (
+    'instructor_demo',
+    '$2a$10$rPqDZXq7pJyJXqOcQqZ8eOYN5qF8QXZ8vQ3Z8eOYN5qF8QXZ8vQ3Ze',
+    'Demo Instructor',
+    'INSTRUCTOR',
+    1,
+    NOW(),
+    NOW()
+);

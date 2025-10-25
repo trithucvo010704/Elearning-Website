@@ -22,39 +22,55 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final JwtAuthenticationFilter jwtFilter;
-    private final UserDetailsService uds;
+    private final JwtAuthenticationFilter jwtFilter;// Field: Filter tùy chỉnh để kiểm tra JWT token trong request.
+    private final UserDetailsService uds; // Field: Service để load chi tiết user từ database (implement
+                                          // UserDetailsService).
 
-    @Bean
+    @Bean // Trả về BCryptPasswordEncoder, một thuật toán mã hóa mật khẩu an toàn (hash +
+          // salt).
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
+    @Bean // dùng để xác thực user từ database.
     DaoAuthenticationProvider authProvider() {
-        var dap = new DaoAuthenticationProvider();
-        dap.setPasswordEncoder(passwordEncoder());
-        dap.setUserDetailsService(uds);
+        var dap = new DaoAuthenticationProvider();// Tạo instance của DaoAuthenticationProvider.
+        dap.setPasswordEncoder(passwordEncoder()); // Set encoder để so sánh mật khẩu (sử dụng bean passwordEncoder ở
+                                                   // trên).
+        dap.setUserDetailsService(uds);// Set service để load user (uds là UserDetailsService inject qua constructor).
         return dap;
     }
 
-    @Bean
+    @Bean // Bean chính: SecurityFilterChain, định nghĩa toàn bộ chuỗi filter bảo mật.
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        http.csrf(csrf -> csrf.disable()) // Tắt CSRF vì ứng dụng stateless (JWT), không cần token CSRF.
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Set policy
+                                                                                                    // session là
+                                                                                                    // stateless: Không
+                                                                                                    // tạo session, dùng
+                                                                                                    // JWT thay thế.
                 // Quan trọng: trả 401 khi thiếu token, 403 khi thiếu quyền
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
                         .accessDeniedHandler((req, res, e) -> res.sendError(HttpServletResponse.SC_FORBIDDEN)))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/index.html", "/auth.html").permitAll()
+                        // Static pages - ALL PUBLIC (protection via JavaScript guards)
+                        .requestMatchers("/", "/index.html", "/auth.html", "/course.html", "/admin.html",
+                                "/courses.html")
+                        .permitAll()
                         .requestMatchers("/css/**", "/js/**", "/favicon.ico").permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
-                        // CHỈ mở register & login, KHÔNG mở toàn bộ /api/auth/**
+                        // Auth endpoints - Public
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/hash/**").permitAll()
+                        // Public APIs - Không cần authentication
+                        .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
+                        // All other requests require authentication
                         .anyRequest().authenticated())
                 .authenticationProvider(authProvider())
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);// Thêm filter JWT trước filter
+                                                                                        // mặc định của Spring để kiểm
+                                                                                        // tra token sớm.
         return http.build();
     }
 
