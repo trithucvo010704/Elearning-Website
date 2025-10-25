@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi" data-bs-theme="dark">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chi Tiết Khóa Học - E-Learning</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/style.css" />
+
+    <style>
+        .course-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 60px 0;
+            color: white;
+        }
+
+        .lesson-item {
+            transition: background 0.2s;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+
+        .lesson-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-left-color: #667eea;
+        }
+
+        .lesson-item.locked {
+            opacity: 0.6;
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .paywall-overlay {
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-mortarboard-fill"></i> E-Learning
+            </a>
+            <div class="ms-auto d-flex gap-2">
+                <a href="/" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-house-fill"></i> Trang chủ
+                </a>
+                <span id="userInfo" class="navbar-text text-light d-none"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Course Header -->
+    <section class="course-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-5 fw-bold mb-3" id="courseTitle">Loading...</h1>
+                    <p class="lead mb-4" id="courseDescription"></p>
+                    <div class="d-flex gap-3 align-items-center mb-3">
+                        <span class="badge bg-success" id="courseBadge">Khóa học</span>
+                        <span id="coursePrice" class="h4 mb-0"></span>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-center">
+                    <button id="btnEnroll" class="btn btn-warning btn-lg px-5 d-none">
+                        <i class="bi bi-cart-plus-fill"></i> Đăng ký ngay
+                    </button>
+                    <p id="enrolledBadge" class="badge bg-success fs-5 d-none">
+                        <i class="bi bi-check-circle-fill"></i> Đã đăng ký
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Course Content -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <!-- Video Player -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-0">
+                            <!-- Video Container -->
+                            <div id="videoContainer" class="video-container bg-dark d-none">
+                                <iframe id="videoPlayer" frameborder="0" allowfullscreen></iframe>
+                            </div>
+
+                            <!-- Paywall -->
+                            <div id="paywall" class="paywall-overlay p-5 text-center d-none"
+                                style="min-height: 400px; display: flex; align-items: center; justify-content: center;">
+                                <div>
+                                    <i class="bi bi-lock-fill display-1 text-warning mb-4"></i>
+                                    <h3 class="mb-3">Nội dung này yêu cầu đăng ký khóa học</h3>
+                                    <p class="text-muted mb-4">Đăng ký khóa học để truy cập toàn bộ nội dung</p>
+                                    <button class="btn btn-warning btn-lg px-5" onclick="enrollCourse()">
+                                        <i class="bi bi-cart-plus-fill"></i> Đăng ký ngay
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Empty State -->
+                            <div id="emptyVideo" class="p-5 text-center bg-body-secondary">
+                                <i class="bi bi-play-circle display-1 text-muted mb-3"></i>
+                                <p class="text-muted">Chọn bài học để bắt đầu</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current Lesson Info -->
+                    <div id="lessonInfo" class="card mt-3 d-none">
+                        <div class="card-body">
+                            <h5 id="lessonTitle"></h5>
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-clock"></i> <span id="lessonDuration"></span> phút
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lessons Sidebar -->
+                <div class="col-lg-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-list-ul"></i> Nội dung khóa học
+                            </h5>
+                        </div>
+                        <div class="list-group list-group-flush" id="lessonsList"
+                            style="max-height: 600px; overflow-y: auto;">
+                            <div class="p-4 text-center text-muted">
+                                <div class="spinner-border spinner-border-sm"></div>
+                                <p class="mt-2 mb-0">Đang tải...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        window.API_BASE = "";
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/course-detail.js"></script>
+</body>
+
+</html>
