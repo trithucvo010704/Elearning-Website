@@ -75,4 +75,8 @@ public class Payment extends BaseEntity { // entity kế thừa BaseEntity
         @Enumerated(EnumType.STRING) // enum STRING
         @Column(nullable = false, length = 16) // cột status
         private PaymentStatus status; // trạng thái thanh toán
+
+        @Column(name = "vnp_txn_ref", unique = true, length = 64)
+        private String vnpTxnRef;
+
 }
