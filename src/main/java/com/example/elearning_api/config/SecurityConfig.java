@@ -55,7 +55,10 @@ public class SecurityConfig {
                         .accessDeniedHandler((req, res, e) -> res.sendError(HttpServletResponse.SC_FORBIDDEN)))
                 .authorizeHttpRequests(auth -> auth
                         // Static pages - ALL PUBLIC (protection via JavaScript guards)
-                        .requestMatchers("/", "/index.html", "/auth.html", "/course.html", "/admin.html",
+                        .requestMatchers("/", "/index.html",
+                                "/auth.html", "/course.html", "/admin.html", "/api/auth/**",
+                                "/api/payment/vnpay/return",
+                                "/api/payment/vnpay/ipn",
                                 "/courses.html")
                         .permitAll()
                         .requestMatchers("/css/**", "/js/**", "/favicon.ico").permitAll()
