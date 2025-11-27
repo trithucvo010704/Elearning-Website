@@ -1,6 +1,7 @@
 package com.example.elearning_api.controller;
 
 import com.example.elearning_api.Enum.PaymentStatus;
+import com.example.elearning_api.dto.payment.CreatePaymentRequest;
 import com.example.elearning_api.entity.Payment;
 import com.example.elearning_api.repository.PaymentRepository;
 import com.example.elearning_api.service.VnPayService;
@@ -40,7 +41,7 @@ public class VnPayController {
         boolean valid = vnPayService.validateCallback(allParams);
         String txnRef = allParams.get("vnp_TxnRef");
         String rspCode = allParams.get("vnp_ResponseCode");
-        Payment payment = paymentRepository.findByTxnRef(txnRef).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment not found"));
+        Payment payment = paymentRepository.findByVnpTxnRef(txnRef).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment not found"));
         if (valid && "00".equals(rspCode)) {
             payment.setStatus(PaymentStatus.SUCCESS);
             paymentRepository.save(payment);
@@ -60,7 +61,7 @@ public class VnPayController {
         }
         String txnRef = allParams.get("vnp_TxnRef");
         String rspCode = allParams.get("vnp_ResponseCode");
-        Payment payment = paymentRepository.findByTxnRef(txnRef).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment not found"));
+        Payment payment = paymentRepository.findByVnpTxnRef(txnRef).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment not found"));
         if ("00".equals(rspCode)) {
             payment.setStatus(PaymentStatus.SUCCESS);
             paymentRepository.save(payment);
