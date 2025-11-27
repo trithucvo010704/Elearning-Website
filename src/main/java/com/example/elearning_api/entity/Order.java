@@ -30,4 +30,12 @@ public class Order extends BaseEntity {                            // entity k�
 
     @Column(nullable = false, length = 10)                          // đơn vị tiền
     private String currency = "USD";                                // cột currency
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "course_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_orders_course")
+    )
+    private Course course;
 }

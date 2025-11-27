@@ -8,6 +8,8 @@ import com.example.elearning_api.repository.PaymentRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import com.example.elearning_api.Enum.PaymentStatus;
+import com.example.elearning_api.Enum.Provider;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -25,9 +27,10 @@ public class VnPayService {
     private final PaymentRepository paymentRepository; // giả sử bạn có entity Payment
     private final OrderRepository orderRepo;
 
-    public VnPayService(VnPayConfig config, PaymentRepository paymentRepository) {
+    public VnPayService(VnPayConfig config, PaymentRepository paymentRepository, OrderRepository orderRepo) {
         this.config = config;
         this.paymentRepository = paymentRepository;
+        this.orderRepo = orderRepo;
     }
 
     public String createPayment(Long orderId, Long amount, String ipAddress) {
@@ -92,6 +95,7 @@ public class VnPayService {
             payment.setCourse(order.getCourse());
 
             paymentRepository.save(payment);
+            return paymentUrl;
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("Error generating VNPay payment URL", e);
         }
