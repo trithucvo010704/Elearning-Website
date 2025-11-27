@@ -177,11 +177,59 @@ async function playLesson(lessonId, isFreePreview) {
 }
 
 // ===== Enroll Course =====
-function enrollCourse() {
-  alert(
-    "Chức năng thanh toán đang được phát triển!\n\nTrong phiên bản demo này, bạn có thể:\n- Xem các bài học Free Preview\n- Liên hệ Admin để được cấp quyền"
-  );
+async function enrollCourse() {
+  const token = getToken();
+  if (!token) {
+    const goLogin = confirm("Bạn cần đăng nhập để đăng ký khóa học. Đăng nhập ngay?");
+    if (goLogin) {
+      window.location.href = "/auth.html#/login";
+    }
+    return;
+  }
+
+  const courseId = getCourseId();
+  if (!courseId) {
+    alert("Không xác định được khóa học.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${window.API_BASE}/api/payment/vnpay/course/${courseId}/checkout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      if (res.status === 400) {
+        const text = await res.text();
+        alert(text || "Không thể tạo thanh toán.");
+      } else if (res.status === 401) {
+        alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        window.location.href = "/auth.html#/login";
+      } else {
+        alert(`Lỗi tạo thanh toán: HTTP ${res.status}`);
+      }
+      return;
+    }
+
+    const data = await res.json();
+    const paymentUrl = data.url;
+    if (!paymentUrl) {
+      alert("Không nhận được URL thanh toán từ server.");
+      return;
+    }
+
+    // Redirect sang VNPay
+    window.location.href = paymentUrl;
+  } catch (err) {
+    console.error("Error while creating payment:", err);
+    alert("Có lỗi xảy ra khi tạo thanh toán. Vui lòng thử lại sau.");
+  }
 }
+
 
 // ===== Utilities =====
 function formatPrice(cents, currency) {
@@ -210,4 +258,10 @@ function checkAuth() {
 document.addEventListener("DOMContentLoaded", () => {
   checkAuth();
   loadCourseDetails();
+
+  const btnEnroll = $("#btnEnroll");
+  if (btnEnroll) {
+    btnEnroll.addEventListener("click", enrollCourse);
+  }
+
 });
