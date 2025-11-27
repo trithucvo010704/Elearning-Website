@@ -128,28 +128,49 @@ public class VnPayService {
         }
     }
     public boolean validateCallback(Map<String, String> params) {
-        String secureHash = params.get("vnp_SecureHash");
-        if (secureHash == null) {
+        String receivedSecureHash = params.get("vnp_SecureHash");
+        if (receivedSecureHash == null || receivedSecureHash.isEmpty()) {
             return false;
         }
-        // Remove secure hash and hash type if exist
-        params.remove("vnp_SecureHash");
-        params.remove("vnp_SecureHashType");
 
-        List<String> fieldNames = new ArrayList<>(params.keySet());
-        Collections.sort(fieldNames);
+        // Tạo map đã sort
+        Map<String, String> sorted = new TreeMap<>(params);
+        sorted.remove("vnp_SecureHash");
+        sorted.remove("vnp_SecureHashType");
+
         StringBuilder hashData = new StringBuilder();
-        for (String fieldName : fieldNames) {
-            String value = params.get(fieldName);
-            if (value != null && value.length() > 0) {
-                hashData.append(fieldName).append("=").append(value);
-                if (!fieldName.equals(fieldNames.get(fieldNames.size() -1))) {
+        Iterator<Map.Entry<String, String>> it = sorted.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, String> entry = it.next();
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            if (value != null && !value.isEmpty()) {
+                // Encode giống lúc tạo payment URL
+                try {
+                    String encodedValue = URLEncoder.encode(
+                            value,
+                            StandardCharsets.US_ASCII.toString()
+                    );
+                    hashData.append(key).append("=").append(encodedValue);
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException("Error encoding VNPay callback value", e);
+                }
+
+                if (it.hasNext()) {
                     hashData.append("&");
                 }
             }
         }
         String calculatedHash = hmacSHA512(config.getHashSecret(), hashData.toString());
-        return calculatedHash.equals(secureHash);
+
+        System.out.println("=== VNPay CALLBACK SIGNATURE CHECK ===");
+        System.out.println("Raw params : " + params);
+        System.out.println("Hash data  : " + hashData);
+        System.out.println("Received   : " + receivedSecureHash);
+        System.out.println("Calculated : " + calculatedHash);
+
+        return receivedSecureHash.equalsIgnoreCase(calculatedHash);
     }
 
     private String hmacSHA512(String key, String data) {
