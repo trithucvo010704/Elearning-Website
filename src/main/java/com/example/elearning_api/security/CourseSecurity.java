@@ -1,5 +1,6 @@
 package com.example.elearning_api.security;
 
+import com.example.elearning_api.Enum.Role;
 import com.example.elearning_api.repository.CourseInstructorRepo;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -16,12 +17,19 @@ public class CourseSecurity {
         if (user == null) {
             return false;
         }
-        boolean isAdmin = user.hasRole(com.example.elearning_api.Enum.Role.ADMIN);
-        if (isAdmin)
+
+        if (user.hasRole(Role.ADMIN)) {
             return true;
+        }
+
         Long userId = user.getUser().getId();
-        return userId != null && ciRepo.canWrite(courseId, userId);
+        if (userId == null) {
+            return false;
+        }
+
+        return ciRepo.canWrite(courseId, userId);
     }
+
 
     public boolean canWrite(Long courseId, Authentication auth) {
         if (auth == null) {

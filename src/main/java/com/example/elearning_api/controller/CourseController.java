@@ -57,28 +57,17 @@ public class CourseController {
             System.out.println("Generated slug: " + slug);
 
             course = courseRepo.save(course);
-            System.out.println("✅ Course saved with ID: " + course.getId());
 
             // Assign creator as OWNER
-            System.out.println("Creating CourseInstructor...");
             CourseInstructor instructor = new CourseInstructor();
             instructor.setCourse(course);
             instructor.setUser(user.getUser());
             instructor.setRole(InstructorRole.OWNER);
 
-            System.out.println("Course ID: " + (course != null ? course.getId() : "null"));
-            System.out.println("User ID: " + (user.getUser() != null ? user.getUser().getId() : "null"));
-            System.out.println("Role: " + InstructorRole.OWNER);
-
             instructorRepo.save(instructor);
-            System.out.println("✅ CourseInstructor saved");
 
-            System.out.println("=== CREATE COURSE SUCCESS ===");
             return course;
         } catch (Exception e) {
-            System.err.println("=== CREATE COURSE ERROR ===");
-            System.err.println("Error class: " + e.getClass().getName());
-            System.err.println("Error message: " + e.getMessage());
             e.printStackTrace();
             throw e;
         }
@@ -92,14 +81,16 @@ public class CourseController {
             @AuthenticationPrincipal UserPrincipal user) {
 
         Course course = courseRepo.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new CourseNotFoundException("Course not found with id: " + id));
+                .orElseThrow(()
+                        -> new CourseNotFoundException("Course not found with id: " + id));
 
-        course.setTitle(req.getTitle());
-        course.setDescription(req.getDescription());
-        course.setPriceCents(req.getPriceCents().intValue());
         course.setCurrency(req.getCurrency());
         course.setThumbnailUrl(req.getThumbnailUrl());
         course.setSlug(SlugUtil.normalize(req.getTitle()));
+        course.setTitle(req.getTitle());
+        course.setDescription(req.getDescription());
+        course.setPriceCents(req.getPriceCents().intValue());
+
 
         return courseRepo.save(course);
     }
@@ -112,7 +103,8 @@ public class CourseController {
             @AuthenticationPrincipal UserPrincipal user) {
 
         Course course = courseRepo.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new CourseNotFoundException("Course not found with id: " + id));
+                .orElseThrow(() ->
+                        new CourseNotFoundException("Course not found with id: " + id));
         course.setDeletedAt(LocalDateTime.now());
         courseRepo.save(course);
     }
