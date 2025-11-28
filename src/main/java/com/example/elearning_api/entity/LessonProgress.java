@@ -14,9 +14,6 @@ import lombok.Setter;
         indexes = { @Index(name = "idx_lp_enroll_updated", columnList = "enrollment_id, updated_at") } // tra cứu theo enrollment/time
 )
 public class LessonProgress extends BaseEntity {                           // entity kế thừa BaseEntity
-
-
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)                     // thuộc 1 enrollment
     @JoinColumn(name = "enrollment_id", nullable = false,                    // map FK enrollment_id
             foreignKey = @ForeignKey(name = "fk_lp_enroll"))                       // tên FK
