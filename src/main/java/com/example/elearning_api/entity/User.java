@@ -12,20 +12,18 @@ import java.util.List;
 
 @Getter
 @Setter
-@Entity // Danh dau la entity
+@Entity // Đánh dấu là entity
 @Table( // cấu hình bảng
                 name = "users", // tên bảng
                 uniqueConstraints = { // constraint unique
-                                @UniqueConstraint(name = "uq_users_username", columnNames = "username") // username duy
-                                                                                                        // nhất
+                                @UniqueConstraint(name = "uq_users_username", columnNames = "username") // username duy nhất
                 }, indexes = { // các index bổ trợ
-                                @Index(name = "idx_users_role_created", columnList = "role, created_at") // tìm theo
-                                                                                                         // role/time
+                                @Index(name = "idx_users_role_created", columnList = "role, created_at") // tìm theo role/time
                 })
 public class User extends BaseEntity implements org.springframework.security.core.userdetails.UserDetails {
 
         @Column(nullable = false, length = 64)
-        private String username; // Cot Username
+        private String username; // Cột Username
         @Column(name = "password_hash", nullable = false, length = 255) // hash mật khẩu
         private String passwordHash;
         @Column(name = "full_name", length = 255) // họ tên (tùy chọn)
@@ -34,7 +32,7 @@ public class User extends BaseEntity implements org.springframework.security.cor
         @Enumerated(EnumType.STRING) // lưu enum dạng STRING
         @Column(nullable = false, length = 16) // cột role bắt buộc
         private Role role = Role.STUDENT; // mặc định STUDENT
-        @Column(nullable = false) // Kiểm tra user active ?
+        @Column(nullable = false) // Kiểm tra user active
         private boolean enabled = true;
 
         // --- Spring Security ---
