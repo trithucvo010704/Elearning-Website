@@ -3,10 +3,13 @@ package com.example.elearning_api.controller;
 import com.example.elearning_api.dto.course.CreateCourseRequest;
 import com.example.elearning_api.entity.Course;
 import com.example.elearning_api.entity.CourseInstructor;
+import com.example.elearning_api.entity.Enrollment;
 import com.example.elearning_api.Enum.InstructorRole;
+import com.example.elearning_api.Enum.EnrollmentStatus;
 import com.example.elearning_api.exception.CourseNotFoundException;
 import com.example.elearning_api.repository.CourseInstructorRepo;
 import com.example.elearning_api.repository.CourseRepository;
+import com.example.elearning_api.repository.EnrollmentRepository;
 import com.example.elearning_api.security.UserPrincipal;
 import com.example.elearning_api.util.SlugUtil;
 import jakarta.validation.Valid;
@@ -17,7 +20,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -25,6 +30,7 @@ import java.util.List;
 public class CourseController {
     private final CourseRepository courseRepo;
     private final CourseInstructorRepo instructorRepo;
+    private final EnrollmentRepository enrollmentRepo;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -118,5 +124,35 @@ public class CourseController {
             return courseRepo.findAllByInstructor(user.getUser().getId());
         }
         return courseRepo.findAll();
+    }
+
+    @GetMapping("/{id}/enrollment-status")
+    public Map<String, Object> checkEnrollmentStatus(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal user) {
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        if (user == null) {
+            response.put("enrolled", false);
+            response.put("status", null);
+            return response;
+        }
+
+        Course course = courseRepo.findByIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new CourseNotFoundException("Course not found with id: " + id));
+
+        Enrollment enrollment = enrollmentRepo.findByUserAndCourse(user.getUser(), course);
+        
+        if (enrollment != null && enrollment.getStatus() == EnrollmentStatus.ACTIVE) {
+            response.put("enrolled", true);
+            response.put("status", enrollment.getStatus().toString());
+            response.put("enrolledAt", enrollment.getCreatedAt());
+        } else {
+            response.put("enrolled", false);
+            response.put("status", enrollment != null ? enrollment.getStatus().toString() : null);
+        }
+        
+        return response;
     }
 }
