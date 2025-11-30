@@ -20,13 +20,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
-@Component @RequiredArgsConstructor
+@Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtService jwt ;
-    private final UserRepo users ;
+    private final JwtService jwt;
+    private final UserRepo users;
+
     @Override
-    protected void doFilterInternal (HttpServletRequest req , HttpServletResponse res , FilterChain chain)
-    throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
+            throws ServletException, IOException {
         // Bỏ qua nếu đã có Authentication (tránh set 2 lần)
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
             String header = req.getHeader(HttpHeaders.AUTHORIZATION);
