@@ -26,12 +26,12 @@ public class SecurityConfig {
     private final UserDetailsService uds;
 
     @Bean
-    PasswordEncoder passwordEncoder() {
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    DaoAuthenticationProvider authProvider() {
+    public DaoAuthenticationProvider authProvider() {
         var dap = new DaoAuthenticationProvider();
         dap.setPasswordEncoder(passwordEncoder());
         dap.setUserDetailsService(uds);
@@ -39,7 +39,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Quan trọng: trả 401 khi thiếu token, 403 khi thiếu quyền
@@ -59,7 +59,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
         return cfg.getAuthenticationManager();
     }
 }
