@@ -14,21 +14,25 @@ public class BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name="created_at",nullable = false,updatable = false) // map voi cot Created_at
-    private LocalDateTime createdAt; // Ngay khoi tao
+    @Column(name = "created_at", nullable = false, updatable = false) // map với cột created_at
+    private LocalDateTime createdAt; // Ngày khởi tạo
+
     @Column(name = "updated_at", nullable = false) // map cột updated_at
     protected LocalDateTime updatedAt; // thời điểm cập nhật
+
     @Column(name = "deleted_at") // map cột deleted_at (soft-delete)
     protected LocalDateTime deletedAt; // thời điểm xóa mềm (có thể null)
-    @PrePersist  // Anootation de khi ma Java chay no se tu duyet va xet thoi diem khoi tao
-    protected void prePersist() { // Dat protected vi giup ghi de
-        LocalDateTime now = LocalDateTime.now(); // lay ngay gio hien tai
+
+    @PrePersist // Annotation để khi Java chạy nó sẽ tự duyệt và xét thời điểm khởi tạo
+    protected void prePersist() { // Đặt protected vì giúp ghi đè
+        LocalDateTime now = LocalDateTime.now(); // lấy ngày giờ hiện tại
         this.createdAt = now;
         this.updatedAt = now;
     }
-    @PreUpdate // Tuong tu Prepersit dung de cap nhat
+
+    @PreUpdate // Tương tự PrePersist dùng để cập nhật
     protected void preUpdate() {
         LocalDateTime now = LocalDateTime.now();
-        this.updatedAt = now ;
+        this.updatedAt = now;
     }
 }

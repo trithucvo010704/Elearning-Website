@@ -16,9 +16,9 @@ public class JwtService {
     private final SecretKey key;
     private final long expiryMillis;
 
-    public JwtService(@Value("${app.jwt.secret})") String secret,
-            @Value("${app.jwt.expirySeconds:86400}")  long expirySeconds){
-        if(secret == null || secret.length()< 32){
+    public JwtService(@Value("${app.jwt.secret}") String secret,
+                     @Value("${app.jwt.expirySeconds:86400}") long expirySeconds) {
+        if (secret == null || secret.length() < 32) {
             throw new IllegalArgumentException("Secret length must be greater than 32 characters");
         }
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
@@ -42,18 +42,18 @@ public class JwtService {
         return parseClaims(token).getSubject();
     }
 
-    public String extractUsername(String token){
+    public String extractUsername(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build()
                 .parseClaimsJws(token).getBody().getSubject();
     }
-    public boolean isValid(String token, UserDetails user){
+
+    public boolean isValid(String token, UserDetails user) {
         try{
             var claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token)
                     .getBody();
             return claims.getSubject().equals(user.getUsername()) &&
                     claims.getExpiration().after(new Date());
-        }
-        catch (JwtException e){
+        } catch (JwtException e) {
             return false;
         }
     }
