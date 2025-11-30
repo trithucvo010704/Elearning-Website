@@ -60,15 +60,52 @@ async function loadCourseDetails() {
       isFree ? "bg-success" : "bg-warning"
     }`;
 
-    // Show enroll button if not free
-    if (!isFree) {
-      $("#btnEnroll").classList.remove("d-none");
-    }
+    // Check enrollment status
+    await checkEnrollmentStatus(courseId, isFree);
 
     // Load lessons
     await loadLessons(courseId);
   } catch (err) {
     console.error("Error loading course:", err);
+  }
+}
+
+// ===== Check Enrollment Status =====
+async function checkEnrollmentStatus(courseId, isFree) {
+  const token = getToken();
+  
+  // Nếu khóa học miễn phí, không cần check enrollment
+  if (isFree) {
+    $("#btnEnroll").classList.add("d-none");
+    $("#enrolledBadge").classList.add("d-none");
+    return;
+  }
+
+  // Nếu chưa đăng nhập, hiển thị nút đăng ký
+  if (!token) {
+    $("#btnEnroll").classList.remove("d-none");
+    $("#enrolledBadge").classList.add("d-none");
+    return;
+  }
+
+  try {
+    // Gọi API kiểm tra enrollment status
+    const response = await api(`/api/courses/${courseId}/enrollment-status`, { auth: true });
+    
+    if (response.enrolled) {
+      // Đã đăng ký - ẩn nút đăng ký, hiển thị badge
+      $("#btnEnroll").classList.add("d-none");
+      $("#enrolledBadge").classList.remove("d-none");
+    } else {
+      // Chưa đăng ký - hiển thị nút đăng ký
+      $("#btnEnroll").classList.remove("d-none");
+      $("#enrolledBadge").classList.add("d-none");
+    }
+  } catch (err) {
+    console.error("Error checking enrollment status:", err);
+    // Nếu có lỗi, hiển thị nút đăng ký
+    $("#btnEnroll").classList.remove("d-none");
+    $("#enrolledBadge").classList.add("d-none");
   }
 }
 
@@ -254,9 +291,75 @@ function checkAuth() {
   }
 }
 
+// ===== Check Payment Status =====
+function checkPaymentStatus() {
+  const params = new URLSearchParams(window.location.search);
+  const paymentStatus = params.get("payment");
+
+  if (paymentStatus === "success") {
+    // Hiển thị thông báo thanh toán thành công
+    showSuccessMessage("Thanh toán thành công! Bạn đã đăng ký khóa học này. Trang sẽ tự động tải lại...");
+    
+    // Xóa query parameter và reload trang sau 2 giây
+    setTimeout(() => {
+      const url = new URL(window.location);
+      url.searchParams.delete("payment");
+      window.history.replaceState({}, "", url);
+      window.location.reload();
+    }, 2000);
+  } else if (paymentStatus === "failed") {
+    // Hiển thị thông báo thanh toán thất bại
+    showErrorMessage("Thanh toán thất bại! Vui lòng thử lại.");
+    
+    // Xóa query parameter
+    setTimeout(() => {
+      const url = new URL(window.location);
+      url.searchParams.delete("payment");
+      window.history.replaceState({}, "", url);
+    }, 3000);
+  }
+}
+
+// ===== Show Success Message =====
+function showSuccessMessage(message) {
+  const alertDiv = document.createElement("div");
+  alertDiv.className = "alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3";
+  alertDiv.style.zIndex = "9999";
+  alertDiv.innerHTML = `
+    <i class="bi bi-check-circle-fill me-2"></i>
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  document.body.appendChild(alertDiv);
+
+  // Tự động xóa sau 5 giây
+  setTimeout(() => {
+    alertDiv.remove();
+  }, 5000);
+}
+
+// ===== Show Error Message =====
+function showErrorMessage(message) {
+  const alertDiv = document.createElement("div");
+  alertDiv.className = "alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3";
+  alertDiv.style.zIndex = "9999";
+  alertDiv.innerHTML = `
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  document.body.appendChild(alertDiv);
+
+  // Tự động xóa sau 5 giây
+  setTimeout(() => {
+    alertDiv.remove();
+  }, 5000);
+}
+
 // ===== Boot =====
 document.addEventListener("DOMContentLoaded", () => {
   checkAuth();
+  checkPaymentStatus();
   loadCourseDetails();
 
   const btnEnroll = $("#btnEnroll");

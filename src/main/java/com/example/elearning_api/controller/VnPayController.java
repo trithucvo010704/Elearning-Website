@@ -1,5 +1,6 @@
 package com.example.elearning_api.controller;
 
+import com.example.elearning_api.Enum.EnrollmentStatus;
 import com.example.elearning_api.Enum.OrderStatus;
 import com.example.elearning_api.Enum.PaymentStatus;
 import com.example.elearning_api.dto.payment.CreatePaymentRequest;
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -97,7 +99,7 @@ public class VnPayController {
 
     // ========= USER REDIRECT VỀ =========
     @GetMapping("/return")
-    public ResponseEntity<String> returnUrl(@RequestParam Map<String,String> allParams) {
+    public RedirectView returnUrl(@RequestParam Map<String,String> allParams) {
         boolean valid = vnPayService.validateCallback(allParams);
         String txnRef = allParams.get("vnp_TxnRef");
         String rspCode = allParams.get("vnp_ResponseCode");
@@ -105,15 +107,32 @@ public class VnPayController {
         Payment payment = paymentRepository.findByVnpTxnRef(txnRef)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment not found"));
 
+        Long courseId = null;
+        if (payment.getOrder() != null && payment.getOrder().getCourse() != null) {
+            courseId = payment.getOrder().getCourse().getId();
+        }
+
         if (valid && "00".equals(rspCode)) {
             payment.setStatus(PaymentStatus.SUCCESS);
             paymentRepository.save(payment);
             handlePaymentSuccess(payment);
-            return ResponseEntity.ok("Thanh toan thanh cong");
+            
+            // Redirect về trang khóa học với thông báo thành công
+            if (courseId != null) {
+                return new RedirectView("/course.html?id=" + courseId + "&payment=success");
+            } else {
+                return new RedirectView("/courses.html?payment=success");
+            }
         } else {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Thanh toan that bai");
+            
+            // Redirect về trang khóa học với thông báo thất bại
+            if (courseId != null) {
+                return new RedirectView("/course.html?id=" + courseId + "&payment=failed");
+            } else {
+                return new RedirectView("/courses.html?payment=failed");
+            }
         }
     }
 
@@ -153,15 +172,20 @@ public class VnPayController {
 
         // Nếu chưa có enrollment thì tạo (tránh trùng giữa return + ipn)
         if (payment.getEnrollment() == null) {
-            Enrollment enrollment = java.util.Optional
-                    .ofNullable(enrollmentRepository.findByUserAndCourse(order.getUser(), order.getCourse()))
-                    .orElseGet(() -> {
-                        Enrollment e = new Enrollment();
-                        e.setUser(order.getUser());
-                        e.setCourse(order.getCourse());
-                        // set thêm field khác nếu có
-                        return enrollmentRepository.save(e);
-                    });
+            Enrollment enrollment = enrollmentRepository.findByUserAndCourse(order.getUser(), order.getCourse());
+            
+            if (enrollment == null) {
+                // Tạo mới enrollment với status ACTIVE
+                enrollment = new Enrollment();
+                enrollment.setUser(order.getUser());
+                enrollment.setCourse(order.getCourse());
+                enrollment.setStatus(EnrollmentStatus.ACTIVE);
+                enrollment = enrollmentRepository.save(enrollment);
+            } else {
+                // Nếu đã tồn tại, cập nhật status thành ACTIVE
+                enrollment.setStatus(EnrollmentStatus.ACTIVE);
+                enrollment = enrollmentRepository.save(enrollment);
+            }
 
             payment.setEnrollment(enrollment);
             paymentRepository.save(payment);

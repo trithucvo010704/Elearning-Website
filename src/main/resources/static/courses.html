@@ -640,11 +640,15 @@
                 <div class="mb-3">
                   <label class="form-label">
                     <i class="fab fa-youtube me-1"></i>
-                    YouTube Video ID
+                    YouTube URL hoặc Video ID
                   </label>
-                  <input type="text" name="youtubeVideoId" class="form-control" placeholder="vtPkZShrvXQ" required />
-                  <small class="text-muted">Lấy từ URL YouTube:
-                    https://youtube.com/watch?v=<strong>vtPkZShrvXQ</strong></small>
+                  <input type="text" name="youtubeVideoId" class="form-control" 
+                         placeholder="https://youtu.be/xtWIuUwNGtQ hoặc xtWIuUwNGtQ" 
+                         required />
+                  <small class="text-muted">
+                    <div>✅ Nhập URL đầy đủ: <code>https://youtu.be/xtWIuUwNGtQ</code></div>
+                    <div>✅ Hoặc chỉ Video ID: <code>xtWIuUwNGtQ</code></div>
+                  </small>
                 </div>
               </div>
               <div class="col-md-4">
@@ -653,14 +657,17 @@
                     <i class="fas fa-sort-numeric-up me-1"></i>
                     Thứ tự
                   </label>
-                  <input type="number" name="orderIndex" class="form-control" min="0" placeholder="0" required />
+                  <input type="number" name="orderIndex" class="form-control" min="1" placeholder="1" required />
+                  <small class="text-muted">
+                    <i class="fas fa-info-circle"></i> Thứ tự được tự động gợi ý (mỗi khóa học có thứ tự riêng)
+                  </small>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">
                     <i class="fas fa-clock me-1"></i>
                     Thời lượng (giây)
                   </label>
-                  <input type="number" name="durationSec" class="form-control" min="1" placeholder="300" />
+                  <input type="number" name="durationSec" class="form-control" min="1" placeholder="300" value="300" required />
                   <small class="text-muted">Ví dụ: 300 = 5 phút</small>
                 </div>
                 <div class="mb-3 form-check">
