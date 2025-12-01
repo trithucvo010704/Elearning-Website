@@ -13,7 +13,6 @@ import lombok.Setter;
         indexes = { @Index(name = "idx_courses_pub_created", columnList = "published, created_at DESC") } // list theo publish/time
 )
 public class Course extends BaseEntity {
-    // Slug một chuỗi ký tự thân thiện với người dùng và công cụ tìm kiếm, thường được dùng trong URL.
     @Column(nullable = false, length = 255) // slug bắt buộc
     private String slug; // cột slug
 

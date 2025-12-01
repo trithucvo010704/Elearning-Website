@@ -10,19 +10,20 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String,String>> handleIllegalArg(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(Map.of("code", e.getMessage()));
+    public ResponseEntity<Map<String, String>> handleIllegalArg(IllegalArgumentException exception) {
+        return ResponseEntity.badRequest().body(Map.of("code", exception.getMessage()));
     }
+    
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String,String>> handleValidation(MethodArgumentNotValidException ex) {
-        var first = ex.getBindingResult().getFieldErrors().stream().findFirst();
-        String msg = first.map(f -> f.getField() + " " + f.getDefaultMessage())
+    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException exception) {
+        var firstError = exception.getBindingResult().getFieldErrors().stream().findFirst();
+        String errorMessage = firstError.map(error -> error.getField() + " " + error.getDefaultMessage())
                 .orElse("VALIDATION_ERROR");
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(Map.of("code", msg));
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(Map.of("code", errorMessage));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String,String>> handleOthers(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("code","INTERNAL_ERROR"));
+    public ResponseEntity<Map<String, String>> handleOthers(Exception exception) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("code", "INTERNAL_ERROR"));
     }
 }
