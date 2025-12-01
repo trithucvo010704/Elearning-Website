@@ -5,5 +5,7 @@ public enum PaymentStatus {
     REQUIRES_PAYMENT, // cần thanh toán
     PAID,             // đã thanh toán
     FAILED,           // thất bại
-    REFUNDED          // hoàn tiền
+    REFUNDED,          // hoàn tiền
+    PENDING,             //Đang chờ
+    SUCCESS
 }

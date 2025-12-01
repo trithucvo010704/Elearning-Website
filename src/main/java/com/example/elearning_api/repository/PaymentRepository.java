@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
@@ -18,4 +19,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @Query("SELECT COALESCE(SUM(p.amountCents), 0) FROM Payment p WHERE p.createdAt >= :date")
     long sumAmountAfter(@Param("date") LocalDateTime date);
+
+    Optional<Payment> findByVnpTxnRef(String vnpTxnRef);
 }

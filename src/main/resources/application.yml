@@ -25,3 +25,14 @@ app:
     allowed-origins:
       - http://localhost:8080
       - https://your-domain.com
+
+vnpay:
+  pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  tmn-code: 643IFSE4
+  hash-secret: SIE5A4DY1BD75LJ3F589XTZTICVYI651
+  return-url: http://localhost:8080/api/payment/vnpay/return
+  version: 2.1.0
+  command: pay
+  curr-code: VND
+  locale: vn
+

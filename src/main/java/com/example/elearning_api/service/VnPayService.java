@@ -1,0 +1,197 @@
+package com.example.elearning_api.service;
+
+import com.example.elearning_api.config.VnPayConfig;
+import com.example.elearning_api.entity.Payment;
+import com.example.elearning_api.entity.Order;
+import com.example.elearning_api.repository.OrderRepository;
+import com.example.elearning_api.repository.PaymentRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import com.example.elearning_api.Enum.PaymentStatus;
+import com.example.elearning_api.Enum.Provider;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+@Service
+public class VnPayService {
+
+    private final VnPayConfig config;
+    private final PaymentRepository paymentRepository;
+    private final OrderRepository orderRepo;
+
+    public VnPayService(VnPayConfig config, PaymentRepository paymentRepository, OrderRepository orderRepo) {
+        this.config = config;
+        this.paymentRepository = paymentRepository;
+        this.orderRepo = orderRepo;
+    }
+
+    public String createPayment(Long orderId, Long amount, String ipAddress) {
+        try {
+            // ===== Validate input & config =====
+            if (orderId == null) {
+                throw new IllegalArgumentException("orderId cannot be null");
+            }
+            if (amount == null || amount <= 0) {
+                throw new IllegalArgumentException("amount must be > 0");
+            }
+            if (config.getHashSecret() == null || config.getHashSecret().isBlank()) {
+                throw new IllegalStateException("VNPay hashSecret is not configured");
+            }
+            if (config.getPayUrl() == null || config.getPayUrl().isBlank()) {
+                throw new IllegalStateException("VNPay payUrl is not configured");
+            }
+
+            String vnp_TxnRef = orderId.toString();
+            String vnp_OrderInfo = "Thanh toan don hang #" + orderId;
+            String vnp_CreateDate = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+                    .format(LocalDateTime.now());
+            String vnp_ExpireDate = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+                    .format(LocalDateTime.now().plusMinutes(15));
+
+            Map<String, String> vnpParams = new HashMap<>();
+            vnpParams.put("vnp_Version", config.getVersion());
+            vnpParams.put("vnp_Command", config.getCommand());
+            vnpParams.put("vnp_TmnCode", config.getTmnCode());
+            vnpParams.put("vnp_Amount", String.valueOf(amount * 100)); // VNPay yêu cầu *100
+            vnpParams.put("vnp_CurrCode", config.getCurrCode());
+            vnpParams.put("vnp_TxnRef", vnp_TxnRef);
+            vnpParams.put("vnp_OrderInfo", vnp_OrderInfo);
+            vnpParams.put("vnp_OrderType", "other");
+            vnpParams.put("vnp_Locale", config.getLocale());
+            vnpParams.put("vnp_ReturnUrl", config.getReturnUrl());
+            vnpParams.put("vnp_IpAddr", ipAddress);
+            vnpParams.put("vnp_CreateDate", vnp_CreateDate);
+            vnpParams.put("vnp_ExpireDate", vnp_ExpireDate);
+
+            // ===== Build hashData & query =====
+            List<String> fieldNames = new ArrayList<>(vnpParams.keySet());
+            Collections.sort(fieldNames);
+
+            StringBuilder hashData = new StringBuilder();
+            StringBuilder query = new StringBuilder();
+
+            for (int i = 0; i < fieldNames.size(); i++) {
+                String fieldName = fieldNames.get(i);
+                String value = vnpParams.get(fieldName);
+
+                if (value != null && !value.isEmpty()) {
+                    String encoded = URLEncoder.encode(value, StandardCharsets.US_ASCII.toString());
+
+                    hashData.append(fieldName).append("=").append(encoded);
+                    query.append(fieldName).append("=").append(encoded);
+
+                    if (i < fieldNames.size() - 1) {
+                        hashData.append("&");
+                        query.append("&");
+                    }
+                }
+            }
+
+            String secureHash = hmacSHA512(config.getHashSecret(), hashData.toString());
+            query.append("&vnp_SecureHash=").append(secureHash);
+
+            String paymentUrl = config.getPayUrl() + "?" + query.toString();
+
+            // ===== Lưu Payment =====
+            Order order = orderRepo.findById(orderId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+
+            if (order.getCourse() == null) {
+                // Nếu tới đây mà course null là do Order entity chưa được set course
+                throw new IllegalStateException("Order " + orderId + " does not have course set");
+            }
+
+            Payment payment = new Payment();
+            payment.setStatus(PaymentStatus.PENDING);
+            payment.setAmountCents(amount * 100); // amount (VND) → cents
+            payment.setCurrency("VND");
+            payment.setProvider(Provider.VNPAY);
+            payment.setVnpTxnRef(vnp_TxnRef);
+
+            payment.setOrder(order);
+            payment.setUser(order.getUser());
+            payment.setCourse(order.getCourse());
+
+            paymentRepository.save(payment);
+
+            return paymentUrl;
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("Error generating VNPay payment URL", e);
+        }
+    }
+    public boolean validateCallback(Map<String, String> params) {
+        String receivedSecureHash = params.get("vnp_SecureHash");
+        if (receivedSecureHash == null || receivedSecureHash.isEmpty()) {
+            return false;
+        }
+
+        // Tạo map đã sort
+        Map<String, String> sorted = new TreeMap<>(params);
+        sorted.remove("vnp_SecureHash");
+        sorted.remove("vnp_SecureHashType");
+
+        StringBuilder hashData = new StringBuilder();
+        Iterator<Map.Entry<String, String>> it = sorted.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, String> entry = it.next();
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            if (value != null && !value.isEmpty()) {
+                // Encode giống lúc tạo payment URL
+                try {
+                    String encodedValue = URLEncoder.encode(
+                            value,
+                            StandardCharsets.US_ASCII.toString()
+                    );
+                    hashData.append(key).append("=").append(encodedValue);
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException("Error encoding VNPay callback value", e);
+                }
+
+                if (it.hasNext()) {
+                    hashData.append("&");
+                }
+            }
+        }
+        String calculatedHash = hmacSHA512(config.getHashSecret(), hashData.toString());
+
+        System.out.println("=== VNPay CALLBACK SIGNATURE CHECK ===");
+        System.out.println("Raw params : " + params);
+        System.out.println("Hash data  : " + hashData);
+        System.out.println("Received   : " + receivedSecureHash);
+        System.out.println("Calculated : " + calculatedHash);
+
+        return receivedSecureHash.equalsIgnoreCase(calculatedHash);
+    }
+
+    private String hmacSHA512(String key, String data) {
+        try {
+            Mac hmac = Mac.getInstance("HmacSHA512");
+            byte[] hmacKey = key.getBytes(StandardCharsets.UTF_8);
+            SecretKeySpec secretKey = new SecretKeySpec(hmacKey, "HmacSHA512");
+            hmac.init(secretKey);
+            byte[] bytes = hmac.doFinal(data.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hash = new StringBuilder(2 * bytes.length);
+            for (byte b : bytes) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hash.append('0');
+                }
+                hash.append(hex);
+            }
+            return hash.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Error while hashing data for VNPay", e);
+        }
+    }
+}
+

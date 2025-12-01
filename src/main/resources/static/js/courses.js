@@ -272,10 +272,59 @@ async function submitCourse() {
   }
 }
 
+// Extract YouTube Video ID from URL or return as-is if already ID
+function extractYouTubeVideoId(input) {
+  if (!input) return "";
+  
+  // Remove whitespace
+  input = input.trim();
+  
+  // If already a video ID (no special chars), return as-is
+  if (/^[a-zA-Z0-9_-]{6,}$/.test(input)) {
+    return input;
+  }
+  
+  // Try to extract from various YouTube URL formats
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/  // Direct video ID
+  ];
+  
+  for (const pattern of patterns) {
+    const match = input.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+  
+  // If no pattern matches, return original (will fail validation)
+  return input;
+}
+
 // Add new lesson to course
-function addLesson(courseId) {
+async function addLesson(courseId) {
   const form = document.getElementById("lessonForm");
   form.courseId.value = courseId;
+  
+  // Get current lessons to calculate next order index
+  try {
+    const lessons = await api(`/courses/${courseId}/lessons`);
+    
+    // Calculate next order index (max + 1)
+    let nextOrderIndex = 1;
+    if (lessons && lessons.length > 0) {
+      const maxOrder = Math.max(...lessons.map(l => l.orderIndex || 0));
+      nextOrderIndex = maxOrder + 1;
+    }
+    
+    // Set suggested order index
+    form.orderIndex.value = nextOrderIndex;
+  } catch (err) {
+    console.error("Error loading lessons:", err);
+    // Default to 1 if error
+    form.orderIndex.value = 1;
+  }
+  
   showModal("lessonModal");
 }
 
@@ -284,8 +333,55 @@ async function submitLesson() {
   const form = document.getElementById("lessonForm");
   const formData = new FormData(form);
   const courseId = formData.get("courseId");
-  const data = Object.fromEntries(formData.entries());
-  data.freePreview = !!data.freePreview; // Convert to boolean
+  
+  // Extract YouTube Video ID from URL or input
+  const youtubeInput = formData.get("youtubeVideoId");
+  const videoId = extractYouTubeVideoId(youtubeInput);
+  
+  // Build data object with proper types
+  const data = {
+    title: formData.get("title"),
+    youtubeVideoId: videoId,
+    orderIndex: parseInt(formData.get("orderIndex") || "0", 10),
+    durationSec: parseInt(formData.get("durationSec") || "0", 10),
+    freePreview: formData.get("freePreview") === "on" // checkbox value is "on" when checked
+  };
+
+  // Validate required fields
+  if (!data.title || !data.youtubeVideoId) {
+    showToast("❌ Vui lòng điền đầy đủ thông tin!", "danger");
+    return;
+  }
+
+  // Validate YouTube Video ID format
+  if (!/^[a-zA-Z0-9_-]{6,}$/.test(data.youtubeVideoId)) {
+    showToast("❌ YouTube Video ID không hợp lệ! Vui lòng nhập URL hoặc Video ID hợp lệ.", "danger");
+    return;
+  }
+
+  if (isNaN(data.orderIndex) || isNaN(data.durationSec)) {
+    showToast("❌ Thứ tự và thời lượng phải là số!", "danger");
+    return;
+  }
+
+  // Check for duplicate orderIndex
+  try {
+    const existingLessons = await api(`/courses/${courseId}/lessons`);
+    const duplicateOrder = existingLessons.find(l => l.orderIndex === data.orderIndex);
+    
+    if (duplicateOrder) {
+      showToast(`❌ Thứ tự ${data.orderIndex} đã tồn tại! Vui lòng chọn thứ tự khác.`, "danger");
+      
+      // Calculate and suggest next available order
+      const maxOrder = Math.max(...existingLessons.map(l => l.orderIndex || 0));
+      form.orderIndex.value = maxOrder + 1;
+      showToast(`💡 Gợi ý: Thử thứ tự ${maxOrder + 1}`, "info");
+      return;
+    }
+  } catch (err) {
+    console.error("Error checking duplicate orderIndex:", err);
+    // Continue anyway if check fails
+  }
 
   try {
     await api(`/courses/${courseId}/lessons/manual`, {
@@ -297,7 +393,12 @@ async function submitLesson() {
     form.reset();
     loadCourses(); // Refresh to update lesson count
   } catch (err) {
-    showToast("❌ Lỗi khi thêm bài học: " + err.message, "danger");
+    // Handle duplicate entry error
+    if (err.message.includes("Duplicate entry") || err.message.includes("duplicate")) {
+      showToast("❌ Thứ tự bài học đã tồn tại! Vui lòng chọn số khác.", "danger");
+    } else {
+      showToast("❌ Lỗi khi thêm bài học: " + err.message, "danger");
+    }
   }
 }
 
@@ -574,11 +675,36 @@ function logout() {
   }, 1000);
 }
 
+// Check payment status (if redirected from payment)
+function checkPaymentStatus() {
+  const params = new URLSearchParams(window.location.search);
+  const paymentStatus = params.get("payment");
+
+  if (paymentStatus === "success") {
+    showToast("✅ Thanh toán thành công! Khóa học đã được đăng ký.", "success");
+    // Xóa query parameter
+    setTimeout(() => {
+      const url = new URL(window.location);
+      url.searchParams.delete("payment");
+      window.history.replaceState({}, "", url);
+    }, 2000);
+  } else if (paymentStatus === "failed") {
+    showToast("❌ Thanh toán thất bại! Vui lòng thử lại.", "danger");
+    // Xóa query parameter
+    setTimeout(() => {
+      const url = new URL(window.location);
+      url.searchParams.delete("payment");
+      window.history.replaceState({}, "", url);
+    }, 2000);
+  }
+}
+
 // Load courses on page load
 document.addEventListener("DOMContentLoaded", () => {
   if (!getToken()) {
     window.location.href = "/auth.html";
     return;
   }
+  checkPaymentStatus();
   loadCourses();
 });
