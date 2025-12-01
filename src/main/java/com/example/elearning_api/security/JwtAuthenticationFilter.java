@@ -23,28 +23,28 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtService jwtService;
-    private final UserRepo userRepository;
+    private final JwtService jwt;
+    private final UserRepo users;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
         // Bỏ qua nếu đã có Authentication (tránh set 2 lần)
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+            String header = req.getHeader(HttpHeaders.AUTHORIZATION);
 
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7).trim(); // TRIM để tránh case xuống dòng
+            if (header != null && header.startsWith("Bearer ")) {
+                String token = header.substring(7).trim(); // TRIM để tránh case xuống dòng
 
                 try {
-                    String username = jwtService.extractSubject(token); // subject = username
+                    String username = jwt.extractSubject(token); // subject = username
                     if (username != null) {
-                        userRepository.findByUsername(username).ifPresent(user -> {
+                        users.findByUsername(username).ifPresent(u -> {
                             // QUYỀN phải có prefix "ROLE_"
-                            var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
-                            var authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), null, authorities);
-                            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                            SecurityContextHolder.getContext().setAuthentication(authentication);
+                            var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + u.getRole().name()));
+                            var auth = new UsernamePasswordAuthenticationToken(u.getUsername(), null, authorities);
+                            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
+                            SecurityContextHolder.getContext().setAuthentication(auth);
                         });
                     }
                 } catch (JwtException | IllegalArgumentException e) {
@@ -54,6 +54,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // Luôn gọi tiếp filter chain đúng 1 lần
-        filterChain.doFilter(request, response);
+        chain.doFilter(req, res);
     }
 }

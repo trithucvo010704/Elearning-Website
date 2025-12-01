@@ -12,9 +12,9 @@ public class AuthRespone {
     public AuthRespone() {
     }
 
-    public AuthRespone(String token, UserDto userDto) {
+    public AuthRespone(String token, UserDto user) {
         this.token = token;
-        this.user = userDto;
+        this.user = user;
     }
 
     @Getter

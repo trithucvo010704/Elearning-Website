@@ -15,17 +15,17 @@ import java.util.Optional;
 public interface BaseRepo<T extends BaseEntity>
         extends JpaRepository<T, Long>, JpaSpecificationExecutor<T> {
     // Tìm all bản ghi
-    @Query("select entity from #{#entityName} entity where entity.deletedAt is null")
+    @Query("select e from #{#entityName} e where e.deletedAt is null")
     List<T> findAllActive();
 
     // Lấy ra 1 entity
-    @Query("select entity from #{#entityName} entity where entity.id = :id and entity.deletedAt is null")
+    @Query("select e from #{#entityName} e where e.id = :id and e.deletedAt is null")
     Optional<T> findById(@Param("id") long id);
 
     // Xóa mềm
     @Modifying
     @Transactional
-    @Query("update #{#entityName} entity set entity.deletedAt = current_timestamp where entity.id = :id and entity.deletedAt is null")
+    @Query("update #{#entityName} e set e.deletedAt = current_timestamp where e.id = :id and e.deletedAt is null")
     void softDelete(@Param("id") long id);
 
 }

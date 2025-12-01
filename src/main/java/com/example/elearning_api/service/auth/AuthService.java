@@ -22,65 +22,65 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    private final UserRepo userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
+    private final UserRepo users;
+    private final PasswordEncoder encoder;
+    private final JwtService jwt;
 
-    public AuthRespone register(RegisterRequest request) {
-        String username = request.getUsername().trim();
+    public AuthRespone register(RegisterRequest req) {
+        String username = req.getUsername().trim();
 
-        if (userRepository.existsByUsername(username)) {
+        if (users.existsByUsername(username)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists");
         }
 
-        User newUser = new User();
-        newUser.setUsername(username);
-        newUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        newUser.setFullName(Optional.ofNullable(request.getFullName()).orElse(username));
+        User u = new User();
+        u.setUsername(username);
+        u.setPasswordHash(encoder.encode(req.getPassword()));
+        u.setFullName(Optional.ofNullable(req.getFullName()).orElse(username));
         // Nếu bạn muốn chọn role khi đăng ký, thêm field vào RegisterRequest
-        newUser.setRole(Role.STUDENT); // mặc định STUDENT
-        newUser.setEnabled(true);
+        u.setRole(Role.STUDENT); // mặc định STUDENT
+        u.setEnabled(true);
 
-        userRepository.save(newUser);
+        users.save(u);
 
-        String token = jwtService.generateToken(
-                newUser.getUsername(),
-                Map.of("uid", newUser.getId(), "role", newUser.getRole().name())
+        String token = jwt.generateToken(
+                u.getUsername(),
+                Map.of("uid", u.getId(), "role", u.getRole().name())
         );
 
-        return new AuthRespone(token, toDto(newUser));
+        return new AuthRespone(token, toDto(u));
     }
 
-    public AuthRespone login(AuthRequest request) {
-        User user = userRepository.findByUsername(request.getUsername())
+    public AuthRespone login(AuthRequest req) {
+        User u = users.findByUsername(req.getUsername())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
-        if (!user.isEnabled() || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        if (!u.isEnabled() || !encoder.matches(req.getPassword(), u.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
-        String token = jwtService.generateToken(
-                user.getUsername(),
-                Map.of("uid", user.getId(), "role", user.getRole().name())
+        String token = jwt.generateToken(
+                u.getUsername(),
+                Map.of("uid", u.getId(), "role", u.getRole().name())
         );
 
-        return new AuthRespone(token, toDto(user));
+        return new AuthRespone(token, toDto(u));
     }
 
     public AuthRespone me(String username) {
-        User user = userRepository.findByUsername(username)
+        User u = users.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         
         // /me không cấp token mới
-        return new AuthRespone(null, toDto(user));
+        return new AuthRespone(null, toDto(u));
     }
 
-    private AuthRespone.UserDto toDto(User user) {
+    private AuthRespone.UserDto toDto(User u) {
         return new AuthRespone.UserDto(
-                user.getId(),
-                user.getUsername(),
-                user.getFullName(),
-                user.getRole().name()
+                u.getId(),
+                u.getUsername(),
+                u.getFullName(),
+                u.getRole().name()
         );
     }
 

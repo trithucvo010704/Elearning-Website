@@ -10,11 +10,11 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthUserDetailsService implements UserDetailsService {
-    private final UserRepo userRepository;
+    private final UserRepo users;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username)
+        return users.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Username not found"));
     }
 }

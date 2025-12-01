@@ -25,14 +25,14 @@ public class BaseEntity {
 
     @PrePersist // Annotation để khi Java chạy nó sẽ tự duyệt và xét thời điểm khởi tạo
     protected void prePersist() { // Đặt protected vì giúp ghi đè
-        LocalDateTime currentTime = LocalDateTime.now(); // lấy ngày giờ hiện tại
-        this.createdAt = currentTime;
-        this.updatedAt = currentTime;
+        LocalDateTime now = LocalDateTime.now(); // lấy ngày giờ hiện tại
+        this.createdAt = now;
+        this.updatedAt = now;
     }
 
     @PreUpdate // Tương tự PrePersist dùng để cập nhật
     protected void preUpdate() {
-        LocalDateTime currentTime = LocalDateTime.now();
-        this.updatedAt = currentTime;
+        LocalDateTime now = LocalDateTime.now();
+        this.updatedAt = now;
     }
 }

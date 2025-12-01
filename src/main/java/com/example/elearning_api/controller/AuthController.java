@@ -20,16 +20,15 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
-    private final AuthService authService;
-    
+    private final AuthService auth;
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody @Valid RegisterRequest request) {
-        return ResponseEntity.ok(authService.register(request));
+    public ResponseEntity<?> register(@RequestBody @Valid RegisterRequest req) {
+        return ResponseEntity.ok(auth.register(req));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody @Valid AuthRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<?> login(@RequestBody @Valid AuthRequest req) {
+        return ResponseEntity.ok(auth.login(req));
     }
 
     @GetMapping("/me")
@@ -38,6 +37,6 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
         }
         String username = authentication.getName();
-        return ResponseEntity.ok(authService.me(username));
+        return ResponseEntity.ok(auth.me(username));
     }
 }
