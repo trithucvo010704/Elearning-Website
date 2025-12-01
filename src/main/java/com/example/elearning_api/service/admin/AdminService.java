@@ -23,6 +23,10 @@ public class AdminService {
     private final CourseRepository courseRepo;
     private final EnrollmentRepository enrollmentRepo;
     private final PaymentRepository paymentRepo;
+    private final CourseInstructorRepo courseInstructorRepo;
+    private final VideoLessonRepo videoLessonRepo;
+    private final OrderItemRepository orderItemRepo;
+    private final LessonProgressRepository lessonProgressRepo;
 
     /**
      * Retrieves all users in the system
@@ -94,15 +98,38 @@ public class AdminService {
 
     /**
      * Deletes a course from the system
+     * Xóa course và tất cả dữ liệu liên quan (course_instructors, enrollments, order_items, video_lessons, lesson_progress)
      * @param courseId The ID of the course to delete
      * @throws ResourceNotFoundException if course not found
      */
     @Transactional
     public void deleteCourse(Long courseId) {
         Assert.notNull(courseId, "Course ID must not be null");
+        
+        // Kiểm tra course có tồn tại không
         if (!courseRepo.existsById(courseId)) {
             throw new ResourceNotFoundException("Course", "id", courseId);
         }
+        
+        // Xóa tất cả dữ liệu liên quan trước khi xóa course
+        // Thứ tự xóa quan trọng: phải xóa bảng con trước, bảng cha sau
+        
+        // 1. Xóa LessonProgress (tham chiếu đến VideoLesson và Enrollment)
+        lessonProgressRepo.deleteByCourseId(courseId);
+        
+        // 2. Xóa VideoLesson (tham chiếu đến Course)
+        videoLessonRepo.deleteByCourseId(courseId);
+        
+        // 3. Xóa Enrollment (tham chiếu đến Course)
+        enrollmentRepo.deleteByCourseId(courseId);
+        
+        // 4. Xóa OrderItem (tham chiếu đến Course)
+        orderItemRepo.deleteByCourseId(courseId);
+        
+        // 5. Xóa CourseInstructor (tham chiếu đến Course) - đây là nguyên nhân lỗi ban đầu
+        courseInstructorRepo.deleteByCourseId(courseId);
+        
+        // 6. Cuối cùng mới xóa Course
         courseRepo.deleteById(courseId);
     }
 
