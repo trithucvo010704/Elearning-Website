@@ -17,7 +17,7 @@ public class JwtService {
     private final long expiryMillis;
 
     public JwtService(@Value("${app.jwt.secret}") String secret,
-                     @Value("${app.jwt.expirySeconds:86400}") long expirySeconds) {
+                      @Value("${app.jwt.expirySeconds:86400}") long expirySeconds) {
         if (secret == null || secret.length() < 32) {
             throw new IllegalArgumentException("Secret length must be greater than 32 characters");
         }
@@ -48,7 +48,7 @@ public class JwtService {
     }
 
     public boolean isValid(String token, UserDetails user) {
-        try{
+        try {
             var claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token)
                     .getBody();
             return claims.getSubject().equals(user.getUsername()) &&
@@ -60,8 +60,8 @@ public class JwtService {
 
     public boolean isValidForUser(String token, String expectedUsername) {
         try {
-            var c = parseClaims(token);
-            return expectedUsername.equals(c.getSubject()) && c.getExpiration().after(new Date());
+            var claims = parseClaims(token);
+            return expectedUsername.equals(claims.getSubject()) && claims.getExpiration().after(new Date());
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }

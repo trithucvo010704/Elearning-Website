@@ -33,54 +33,54 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists");
         }
 
-        User u = new User();
-        u.setUsername(username);
-        u.setPasswordHash(encoder.encode(req.getPassword()));
-        u.setFullName(Optional.ofNullable(req.getFullName()).orElse(username));
+        User user = new User();
+        user.setUsername(username);
+        user.setPasswordHash(encoder.encode(req.getPassword()));
+        user.setFullName(Optional.ofNullable(req.getFullName()).orElse(username));
         // Nếu bạn muốn chọn role khi đăng ký, thêm field vào RegisterRequest
-        u.setRole(Role.STUDENT); // mặc định STUDENT
-        u.setEnabled(true);
+        user.setRole(Role.STUDENT); // mặc định STUDENT
+        user.setEnabled(true);
 
-        users.save(u);
+        users.save(user);
 
         String token = jwt.generateToken(
-                u.getUsername(),
-                Map.of("uid", u.getId(), "role", u.getRole().name())
+                user.getUsername(),
+                Map.of("uid", user.getId(), "role", user.getRole().name())
         );
 
-        return new AuthRespone(token, toDto(u));
+        return new AuthRespone(token, toDto(user));
     }
 
     public AuthRespone login(AuthRequest req) {
-        User u = users.findByUsername(req.getUsername())
+        User user = users.findByUsername(req.getUsername())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
-        if (!u.isEnabled() || !encoder.matches(req.getPassword(), u.getPassword())) {
+        if (!user.isEnabled() || !encoder.matches(req.getPassword(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
         String token = jwt.generateToken(
-                u.getUsername(),
-                Map.of("uid", u.getId(), "role", u.getRole().name())
+                user.getUsername(),
+                Map.of("uid", user.getId(), "role", user.getRole().name())
         );
 
-        return new AuthRespone(token, toDto(u));
+        return new AuthRespone(token, toDto(user));
     }
 
     public AuthRespone me(String username) {
-        User u = users.findByUsername(username)
+        User user = users.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        
+
         // /me không cấp token mới
-        return new AuthRespone(null, toDto(u));
+        return new AuthRespone(null, toDto(user));
     }
 
-    private AuthRespone.UserDto toDto(User u) {
+    private AuthRespone.UserDto toDto(User user) {
         return new AuthRespone.UserDto(
-                u.getId(),
-                u.getUsername(),
-                u.getFullName(),
-                u.getRole().name()
+                user.getId(),
+                user.getUsername(),
+                user.getFullName(),
+                user.getRole().name()
         );
     }
 
