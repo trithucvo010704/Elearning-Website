@@ -2,6 +2,8 @@ package com.example.elearning_api.repository;
 
 import com.example.elearning_api.Enum.InstructorRole;
 import com.example.elearning_api.entity.CourseInstructor;
+import jakarta.transaction.Transactional;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -50,4 +52,10 @@ public interface CourseInstructorRepo extends BaseRepo<CourseInstructor> {
             "WHERE ci.course.id = :courseId AND ci.user.id = :userId " +
             "AND ci.deletedAt IS NULL")
     Optional<InstructorRole> findRole(@Param("courseId") Long courseId, @Param("userId") Long userId);
+
+    // Xóa tất cả CourseInstructor của một course
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM CourseInstructor ci WHERE ci.course.id = :courseId")
+    void deleteByCourseId(@Param("courseId") Long courseId);
 }

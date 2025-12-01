@@ -28,7 +28,7 @@ public class JwtService {
 
     /** API CHUẨN: dùng trong AuthService */
     // Method generate token: Subject (username), claims tùy chọn
-    public String generateToken(String subject, Map<String, Object> claims) {
+        public String generateToken(String subject, Map<String, Object> claims) {
         long now = System.currentTimeMillis();
         JwtBuilder builder = Jwts.builder()
                 .setSubject(subject)
