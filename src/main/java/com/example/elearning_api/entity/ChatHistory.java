@@ -6,11 +6,25 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Entity lưu trữ lịch sử chat giữa học viên và AI
- * Hỗ trợ tính năng chatbot hỏi đáp trong từng khóa học
+ * Entity lưu trữ lịch sử chat giữa học viên và AI Assistant
+ * 
+ * <p>Chức năng chính:</p>
+ * <ul>
+ *   <li>Lưu trữ tin nhắn của người dùng và phản hồi từ AI</li>
+ *   <li>Phân loại chat theo từng khóa học cụ thể</li>
+ *   <li>Hỗ trợ context-aware chatbot cho việc hỏi đáp</li>
+ *   <li>Lưu lịch sử để AI có thể tham khảo các tin nhắn trước</li>
+ * </ul>
+ * 
+ * <p>Quan hệ:</p>
+ * <ul>
+ *   <li>ManyToOne với User - người dùng tham gia chat</li>
+ *   <li>ManyToOne với Course - khóa học liên quan</li>
+ * </ul>
  * 
  * @author phongdh
- * @version 1.0
+ * @version 1.1
+ * @since 2024-12-02
  */
 @Getter
 @Setter
@@ -30,9 +44,12 @@ import lombok.Setter;
 )
 public class ChatHistory extends BaseEntity {
 
+    // ==================== RELATIONSHIPS ====================
+
     /**
-     * Người dùng tham gia chat
+     * Người dùng tham gia cuộc hội thoại
      * Liên kết đến bảng users
+     * Không thể null - phải có user
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
@@ -44,7 +61,8 @@ public class ChatHistory extends BaseEntity {
 
     /**
      * Khóa học liên quan đến cuộc hội thoại
-     * Chat được phân loại theo từng khóa học
+     * Chat được phân loại theo từng khóa học để AI hiểu context
+     * Không thể null - phải thuộc một khóa học
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
@@ -54,9 +72,12 @@ public class ChatHistory extends BaseEntity {
     )
     private Course course;
 
+    // ==================== MESSAGE FIELDS ====================
+
     /**
-     * Vai trò của tin nhắn: USER hoặc AI
-     * Phân biệt tin nhắn từ người dùng và phản hồi từ AI
+     * Vai trò của tin nhắn trong cuộc hội thoại
+     * USER: tin nhắn từ người dùng (câu hỏi)
+     * AI: tin nhắn từ AI Assistant (câu trả lời)
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "message_role", nullable = false, length = 8)
@@ -65,6 +86,7 @@ public class ChatHistory extends BaseEntity {
     /**
      * Nội dung tin nhắn
      * Có thể chứa văn bản dài nên sử dụng @Lob
+     * Hỗ trợ markdown formatting
      */
     @Lob
     @Column(nullable = false)

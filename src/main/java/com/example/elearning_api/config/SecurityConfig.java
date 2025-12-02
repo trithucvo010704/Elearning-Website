@@ -19,51 +19,77 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Cấu hình bảo mật cho ứng dụng E-Learning
- * Sử dụng JWT Token để xác thực và BCrypt để mã hóa mật khẩu
+ * Cấu hình bảo mật toàn diện cho ứng dụng E-Learning Platform
  * 
- * <p>Các tính năng bảo mật:</p>
+ * <p>Kiến trúc bảo mật:</p>
  * <ul>
- *   <li>Stateless session - không lưu session trên server</li>
- *   <li>JWT Authentication Filter - xác thực token mỗi request</li>
- *   <li>BCrypt Password Encoding - mã hóa mật khẩu an toàn</li>
- *   <li>Role-based Authorization - phân quyền theo vai trò</li>
+ *   <li>Stateless Authentication - Sử dụng JWT Token</li>
+ *   <li>BCrypt Password Hashing - Mã hóa mật khẩu an toàn</li>
+ *   <li>Role-based Access Control (RBAC) - Phân quyền theo vai trò</li>
+ *   <li>Method-level Security - Bảo vệ ở mức method với @PreAuthorize</li>
  * </ul>
  * 
+ * <p>Security Flow:</p>
+ * <ol>
+ *   <li>Request đến server</li>
+ *   <li>JwtAuthenticationFilter kiểm tra token trong header</li>
+ *   <li>Nếu token hợp lệ, set Authentication vào SecurityContext</li>
+ *   <li>AuthorizationFilter kiểm tra quyền truy cập endpoint</li>
+ *   <li>Nếu đủ quyền, request được xử lý bởi Controller</li>
+ * </ol>
+ * 
  * @author phongdh
- * @version 1.0
+ * @version 1.1
+ * @since 2024-12-02
+ * @see JwtAuthenticationFilter
+ * @see BCryptPasswordEncoder
  */
 @Configuration
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    // ==================== DEPENDENCIES ====================
+
     /**
-     * JWT Authentication Filter để xử lý token trong mỗi request
+     * JWT Authentication Filter - Xử lý token trong mỗi request
+     * Được inject tự động bởi Spring
      */
     private final JwtAuthenticationFilter jwtFilter;
 
     /**
-     * Service để load thông tin user từ database
+     * UserDetailsService - Load thông tin user từ database
+     * Implementation: AuthUserDetailsService
      */
     private final UserDetailsService uds;
 
+    // ==================== PASSWORD ENCODER ====================
+
     /**
-     * Bean mã hóa mật khẩu sử dụng BCrypt
-     * BCrypt tự động thêm salt và có độ phức tạp có thể điều chỉnh
+     * Bean mã hóa mật khẩu sử dụng BCrypt Algorithm
      * 
-     * @return PasswordEncoder instance sử dụng BCrypt algorithm
+     * <p>Đặc điểm của BCrypt:</p>
+     * <ul>
+     *   <li>Tự động generate salt cho mỗi password</li>
+     *   <li>Có work factor có thể điều chỉnh (default: 10)</li>
+     *   <li>Chống rainbow table attacks</li>
+     *   <li>Slow hashing - chống brute force</li>
+     * </ul>
+     * 
+     * @return PasswordEncoder instance sử dụng BCrypt
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // ==================== AUTHENTICATION PROVIDER ====================
+
     /**
-     * Cấu hình Authentication Provider sử dụng DAO
+     * Cấu hình Authentication Provider sử dụng DAO pattern
      * Kết hợp UserDetailsService và PasswordEncoder để xác thực
      * 
-     * @return DaoAuthenticationProvider đã được cấu hình
+     * @return DaoAuthenticationProvider đã được cấu hình đầy đủ
      */
     @Bean
     public DaoAuthenticationProvider authProvider() {
@@ -73,70 +99,79 @@ public class SecurityConfig {
         return authProvider;
     }
 
+    // ==================== SECURITY FILTER CHAIN ====================
+
     /**
-     * Cấu hình Security Filter Chain
-     * Định nghĩa các rule bảo mật cho từng endpoint
+     * Cấu hình Security Filter Chain - Định nghĩa các rule bảo mật
      * 
-     * <p>Public endpoints (không cần xác thực):</p>
+     * <p>Public Endpoints (Không cần xác thực):</p>
      * <ul>
-     *   <li>GET /, /index.html, /auth.html - Trang tĩnh</li>
-     *   <li>GET /css/**, /js/**, /favicon.ico - Static resources</li>
-     *   <li>GET /actuator/health - Health check</li>
-     *   <li>POST /api/auth/register, /api/auth/login - Đăng ký, đăng nhập</li>
+     *   <li>Static pages: /, /index.html, /auth.html</li>
+     *   <li>Static resources: /css/**, /js/**, /favicon.ico</li>
+     *   <li>Health check: GET /actuator/health</li>
+     *   <li>Auth endpoints: /api/auth/register, /api/auth/login</li>
      * </ul>
      * 
-     * <p>Protected endpoints: Tất cả các endpoint còn lại yêu cầu JWT token hợp lệ</p>
+     * <p>Protected Endpoints:</p>
+     * <ul>
+     *   <li>Tất cả endpoints khác yêu cầu JWT token hợp lệ</li>
+     *   <li>Role-specific endpoints được kiểm tra thêm ở Controller</li>
+     * </ul>
      * 
-     * @param http HttpSecurity object để cấu hình
-     * @return SecurityFilterChain đã được cấu hình
+     * @param http HttpSecurity builder để cấu hình
+     * @return SecurityFilterChain đã được build
      * @throws Exception nếu có lỗi trong quá trình cấu hình
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Tắt CSRF vì sử dụng JWT (stateless)
+                // [1] Tắt CSRF - Không cần thiết cho stateless JWT authentication
                 .csrf(csrf -> csrf.disable())
 
-                // Cấu hình stateless session - không tạo session
+                // [2] Cấu hình Stateless Session - Không tạo HTTP session
                 .sessionManagement(session -> 
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // Xử lý exception: 401 Unauthorized, 403 Forbidden
+                // [3] Xử lý Exception cho Authentication và Authorization
                 .exceptionHandling(exception -> exception
+                        // 401 Unauthorized - Khi không có token hoặc token không hợp lệ
                         .authenticationEntryPoint((request, response, authException) -> 
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
                         )
+                        // 403 Forbidden - Khi không đủ quyền truy cập
                         .accessDeniedHandler((request, response, accessDeniedException) -> 
                                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied")
                         )
                 )
 
-                // Cấu hình authorization cho các endpoints
+                // [4] Cấu hình Authorization Rules cho các endpoints
                 .authorizeHttpRequests(authorize -> authorize
-                        // Public static pages
+                        // Public: Static pages
                         .requestMatchers("/", "/index.html", "/auth.html").permitAll()
-                        // Public static resources
+                        // Public: Static resources (CSS, JS, images)
                         .requestMatchers("/css/**", "/js/**", "/favicon.ico").permitAll()
-                        // Health check endpoint
+                        // Public: Health check endpoint cho monitoring
                         .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
-                        // Public auth endpoints - CHỈ register và login
+                        // Public: Authentication endpoints - CHỈ register và login
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
-                        // Tất cả request khác yêu cầu xác thực
+                        // Protected: Tất cả request khác yêu cầu authentication
                         .anyRequest().authenticated()
                 )
 
-                // Đăng ký authentication provider
+                // [5] Đăng ký Authentication Provider
                 .authenticationProvider(authProvider())
 
-                // Thêm JWT filter trước UsernamePasswordAuthenticationFilter
+                // [6] Thêm JWT Filter vào filter chain (trước UsernamePasswordAuthenticationFilter)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    // ==================== AUTHENTICATION MANAGER ====================
+
     /**
-     * Bean AuthenticationManager để xử lý authentication
+     * Bean AuthenticationManager để xử lý authentication requests
      * Được sử dụng trong các service cần xác thực thủ công
      * 
      * @param config AuthenticationConfiguration từ Spring Security
