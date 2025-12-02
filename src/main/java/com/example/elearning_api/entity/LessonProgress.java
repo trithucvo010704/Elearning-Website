@@ -1,36 +1,72 @@
-// src/main/java/com/yourorg/elearning/entity/LessonProgress.java
-package com.example.elearning_api.entity;                                   // gói entity
+package com.example.elearning_api.entity;
 
-import jakarta.persistence.*;                                             // import JPA
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Entity theo dõi tiến độ học tập của học viên
+ * Lưu trữ thông tin về thời gian xem video và trạng thái hoàn thành bài học
+ * 
+ * @author phongdh
+ * @version 1.0
+ */
 @Getter
 @Setter
 @Entity
-@Table(                                                                   // cấu hình bảng
-        name = "lesson_progress",                                               // tên bảng
-        uniqueConstraints = { @UniqueConstraint(name = "uq_enroll_lesson", columnNames = {"enrollment_id","lesson_id"}) }, // unique per enrollment+lesson
-        indexes = { @Index(name = "idx_lp_enroll_updated", columnList = "enrollment_id, updated_at") } // tra cứu theo enrollment/time
+@Table(
+        name = "lesson_progress",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_enroll_lesson",
+                        columnNames = {"enrollment_id", "lesson_id"}
+                )
+        },
+        indexes = {
+                @Index(
+                        name = "idx_lp_enroll_updated",
+                        columnList = "enrollment_id, updated_at"
+                )
+        }
 )
-public class LessonProgress extends BaseEntity {                           // entity kế thừa BaseEntity
+public class LessonProgress extends BaseEntity {
 
+    /**
+     * Liên kết đến enrollment (ghi danh) của học viên
+     * Mỗi tiến độ thuộc về một enrollment cụ thể
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "enrollment_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_lp_enroll")
+    )
+    private Enrollment enrollment;
 
+    /**
+     * Liên kết đến bài học video
+     * Theo dõi tiến độ của từng bài học riêng biệt
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "lesson_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_lp_lesson")
+    )
+    private VideoLesson lesson;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)                     // thuộc 1 enrollment
-    @JoinColumn(name = "enrollment_id", nullable = false,                    // map FK enrollment_id
-            foreignKey = @ForeignKey(name = "fk_lp_enroll"))                       // tên FK
-    private Enrollment enrollment;                                           // quan hệ Enrollment
+    /**
+     * Số giây đã xem của video
+     * Dùng để resume video từ vị trí đã xem
+     */
+    @Column(name = "watched_sec", nullable = false)
+    private Integer watchedSec = 0;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)                     // tham chiếu 1 lesson
-    @JoinColumn(name = "lesson_id", nullable = false,                        // map FK lesson_id
-            foreignKey = @ForeignKey(name = "fk_lp_lesson"))                       // tên FK
-    private VideoLesson lesson;                                              // quan hệ VideoLesson
-
-    @Column(name = "watched_sec", nullable = false)                          // số giây đã xem
-    private Integer watchedSec = 0;                                          // cột watched_sec
-
-    @Column(nullable = false)                                                // trạng thái hoàn tất
-    private boolean completed = false;                                       // cột completed
+    /**
+     * Trạng thái hoàn thành bài học
+     * true: đã hoàn thành, false: chưa hoàn thành
+     */
+    @Column(nullable = false)
+    private boolean completed = false;
 
 }

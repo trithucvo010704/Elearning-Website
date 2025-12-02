@@ -1,42 +1,82 @@
 package com.example.elearning_api.entity;
 
-
 import com.example.elearning_api.Enum.Provider;
-import jakarta.persistence.*;                                                // import JPA
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;                                              // kiểu thời gian
+import java.time.LocalDateTime;
+
+/**
+ * Entity lưu trữ các sự kiện webhook từ các nhà cung cấp bên ngoài
+ * Hiện tại hỗ trợ Stripe webhook cho thanh toán
+ * 
+ * @author phongdh
+ * @version 1.0
+ */
 @Getter
 @Setter
-@Entity                                                                       // đánh dấu entity
-@Table(                                                                       // cấu hình bảng
-        name = "webhook_events",                                                    // tên bảng
-        indexes = { @Index(name = "idx_webhook_processed", columnList = "processed, created_at") } // xử lý hàng đợi
+@Entity
+@Table(
+        name = "webhook_events",
+        indexes = {
+                @Index(
+                        name = "idx_webhook_processed",
+                        columnList = "processed, created_at"
+                )
+        }
 )
-public class WebhookEvent extends BaseEntity {                                 // entity kế thừa BaseEntity
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class WebhookEvent extends BaseEntity {
+
+    /**
+     * ID tự tăng của webhook event
+     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)                                                 // enum STRING
-    @Column(nullable = false, length = 16)                                       // cột provider
-    private Provider provider = Provider.STRIPE;                                  // mặc định STRIPE
+    /**
+     * Nhà cung cấp webhook
+     * Mặc định là STRIPE cho thanh toán
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private Provider provider = Provider.STRIPE;
 
-    @Column(name = "event_id", nullable = false, unique = true, length = 255)    // id sự kiện duy nhất
-    private String eventId;                                                      // cột event_id
+    /**
+     * ID sự kiện từ nhà cung cấp
+     * Unique để tránh xử lý trùng lặp
+     */
+    @Column(name = "event_id", nullable = false, unique = true, length = 255)
+    private String eventId;
 
-    @Column(length = 255)                                                        // chữ ký webhook
-    private String signature;                                                    // cột signature
+    /**
+     * Chữ ký xác thực webhook
+     * Dùng để verify webhook đến từ nguồn hợp lệ
+     */
+    @Column(length = 255)
+    private String signature;
 
-    @Lob                                                                         // JSON dài
-    @Column(columnDefinition = "JSON", nullable = false)                         // kiểu JSON MySQL
-    private String payload;                                                      // nội dung payload
+    /**
+     * Nội dung payload của webhook
+     * Lưu dưới dạng JSON để parse khi cần
+     */
+    @Lob
+    @Column(columnDefinition = "JSON", nullable = false)
+    private String payload;
 
-    @Column(nullable = false)                                                    // trạng thái xử lý
-    private boolean processed = false;                                           // cột processed
+    /**
+     * Trạng thái đã xử lý hay chưa
+     * false: chờ xử lý, true: đã xử lý
+     */
+    @Column(nullable = false)
+    private boolean processed = false;
 
-    @Column(name = "processed_at")                                               // thời điểm xử lý
-    private LocalDateTime processedAt;                                           // cột processed_at
+    /**
+     * Thời điểm xử lý webhook
+     * Null nếu chưa được xử lý
+     */
+    @Column(name = "processed_at")
+    private LocalDateTime processedAt;
 
 }
-
