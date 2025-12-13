@@ -40,7 +40,7 @@ public class AdminController {
 
     // Course Management
     @GetMapping("/courses")
-    public ResponseEntity<List<Course>> getAllCourses() {
+    public ResponseEntity<List<AdminCourseResponse>> getAllCourses() {
         return ResponseEntity.ok(adminService.getAllCourses());
     }
 

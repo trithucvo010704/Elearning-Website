@@ -1,7 +1,9 @@
 package com.example.elearning_api.service.admin;
 
 import com.example.elearning_api.Enum.CourseStatus;
+import com.example.elearning_api.Enum.InstructorRole;
 import com.example.elearning_api.Enum.Role;
+import com.example.elearning_api.dto.admin.AdminCourseResponse;
 import com.example.elearning_api.dto.admin.AdminStatistics;
 import com.example.elearning_api.entity.*;
 import com.example.elearning_api.exception.ResourceNotFoundException;
@@ -15,12 +17,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AdminService {
     private final UserRepository userRepo;
     private final CourseRepository courseRepo;
+    private final CourseInstructorRepo courseInstructorRepo;
     private final EnrollmentRepository enrollmentRepo;
     private final PaymentRepository paymentRepo;
 
@@ -66,11 +70,39 @@ public class AdminService {
     }
 
     /**
-     * Retrieves all courses in the system
-     * @return List of all courses
+     * Retrieves all courses in the system with instructor information
+     * @return List of all courses with instructor info
      */
-    public List<Course> getAllCourses() {
-        return courseRepo.findAll();
+    @Transactional(readOnly = true)
+    public List<AdminCourseResponse> getAllCourses() {
+        List<Course> courses = courseRepo.findAll();
+        
+        if (courses.isEmpty()) {
+            return List.of();
+        }
+        
+        // Load all course instructors with users in one query to avoid N+1 problem
+        List<Long> courseIds = courses.stream().map(Course::getId).collect(Collectors.toList());
+        List<CourseInstructor> allInstructors = courseInstructorRepo.findActiveByCourseIdsWithUser(courseIds);
+        
+        // Group by course ID and select primary instructor (OWNER first, then first available)
+        Map<Long, User> courseInstructorMap = allInstructors.stream()
+                .collect(Collectors.groupingBy(
+                        ci -> ci.getCourse().getId(),
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                list -> list.stream()
+                                        .filter(ci -> ci.getRole() == InstructorRole.OWNER)
+                                        .findFirst()
+                                        .or(() -> list.stream().findFirst())
+                                        .map(CourseInstructor::getUser)
+                                        .orElse(null)
+                        )
+                ));
+        
+        return courses.stream()
+                .map(course -> AdminCourseResponse.fromCourse(course, courseInstructorMap.get(course.getId())))
+                .collect(Collectors.toList());
     }
 
     /**

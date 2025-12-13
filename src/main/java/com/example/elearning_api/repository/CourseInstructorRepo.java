@@ -31,6 +31,20 @@ public interface CourseInstructorRepo extends BaseRepo<CourseInstructor> {
             "ORDER BY ci.role, ci.createdAt")
     List<CourseInstructor> findActiveByCourseId(@Param("courseId") Long courseId);
 
+    // Lấy tất cả instructor của một khóa học với User được load (JOIN FETCH)
+    @Query("SELECT ci FROM CourseInstructor ci " +
+            "JOIN FETCH ci.user " +
+            "WHERE ci.course.id = :courseId AND ci.deletedAt IS NULL " +
+            "ORDER BY ci.role, ci.createdAt")
+    List<CourseInstructor> findActiveByCourseIdWithUser(@Param("courseId") Long courseId);
+
+    // Lấy tất cả instructors cho nhiều courses với User được load (JOIN FETCH)
+    @Query("SELECT ci FROM CourseInstructor ci " +
+            "JOIN FETCH ci.user " +
+            "WHERE ci.course.id IN :courseIds AND ci.deletedAt IS NULL " +
+            "ORDER BY ci.course.id, ci.role, ci.createdAt")
+    List<CourseInstructor> findActiveByCourseIdsWithUser(@Param("courseIds") List<Long> courseIds);
+
     // Lấy instructor cụ thể của khóa học
     @Query("SELECT ci FROM CourseInstructor ci " +
             "WHERE ci.course.id = :courseId AND ci.user.id = :userId " +
