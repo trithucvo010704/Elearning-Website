@@ -26,6 +26,8 @@ app:
       - http://localhost:3000
       - http://localhost:8080
       - https://your-domain.com
+  # gemini:
+  #   api-key: ${GEMINI_API_KEY:}
 
 vnpay:
   pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
@@ -36,4 +38,3 @@ vnpay:
   command: pay
   curr-code: VND
   locale: vn
-

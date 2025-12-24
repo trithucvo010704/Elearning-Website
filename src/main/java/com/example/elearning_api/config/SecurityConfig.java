@@ -68,6 +68,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/hash/**").permitAll()
                         // Public APIs - Không cần authentication
                         .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
+                        // Chat API - Public
+                        .requestMatchers("/api/chat/**").permitAll()
                         // All other requests require authentication
                         .anyRequest().authenticated())
                 .authenticationProvider(authProvider())

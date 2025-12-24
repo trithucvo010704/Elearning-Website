@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -121,4 +122,16 @@ public class AuthService {
         return encoder.encode(password);
     }
 
+    // EMERGENCY: Reset all passwords
+    public void resetAllPasswords(String newPassword) {
+        String hash = encoder.encode(newPassword);
+        List<String> usernames = List.of("admin", "instructor_demo", "student_demo");
+        for (String username : usernames) {
+            users.findByUsername(username).ifPresent(u -> {
+                u.setPasswordHash(hash);
+                users.save(u);
+                System.out.println("Reset password for: " + username);
+            });
+        }
+    }
 }

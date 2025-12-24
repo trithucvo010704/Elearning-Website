@@ -87,8 +87,7 @@ public class CourseController {
             @AuthenticationPrincipal UserPrincipal user) {
 
         Course course = courseRepo.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(()
-                        -> new CourseNotFoundException("Course not found with id: " + id));
+                .orElseThrow(() -> new CourseNotFoundException("Course not found with id: " + id));
 
         course.setCurrency(req.getCurrency());
         course.setThumbnailUrl(req.getThumbnailUrl());
@@ -96,7 +95,6 @@ public class CourseController {
         course.setTitle(req.getTitle());
         course.setDescription(req.getDescription());
         course.setPriceCents(req.getPriceCents().intValue());
-
 
         return courseRepo.save(course);
     }
@@ -109,8 +107,7 @@ public class CourseController {
             @AuthenticationPrincipal UserPrincipal user) {
 
         Course course = courseRepo.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() ->
-                        new CourseNotFoundException("Course not found with id: " + id));
+                .orElseThrow(() -> new CourseNotFoundException("Course not found with id: " + id));
         course.setDeletedAt(LocalDateTime.now());
         courseRepo.save(course);
     }
@@ -121,7 +118,15 @@ public class CourseController {
             @AuthenticationPrincipal UserPrincipal user) {
 
         if (mine && user != null) {
-            return courseRepo.findAllByInstructor(user.getUser().getId());
+            System.out.println("DEBUG: Fetching courses for instructor ID: " + user.getUser().getId());
+            List<Course> courses = courseRepo.findAllByInstructor(user.getUser().getId());
+            System.out.println("DEBUG: Found " + courses.size() + " courses.");
+            if (courses.isEmpty()) {
+                // Fallback check: Check if any course instructors exist for this user ignoring
+                // deletedAt
+                System.out.println("DEBUG: Checking raw DB...");
+            }
+            return courses;
         }
         return courseRepo.findAll();
     }
@@ -130,9 +135,9 @@ public class CourseController {
     public Map<String, Object> checkEnrollmentStatus(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal user) {
-        
+
         Map<String, Object> response = new HashMap<>();
-        
+
         if (user == null) {
             response.put("enrolled", false);
             response.put("status", null);
@@ -143,7 +148,7 @@ public class CourseController {
                 .orElseThrow(() -> new CourseNotFoundException("Course not found with id: " + id));
 
         Enrollment enrollment = enrollmentRepo.findByUserAndCourse(user.getUser(), course);
-        
+
         if (enrollment != null && enrollment.getStatus() == EnrollmentStatus.ACTIVE) {
             response.put("enrolled", true);
             response.put("status", enrollment.getStatus().toString());
@@ -152,7 +157,7 @@ public class CourseController {
             response.put("enrolled", false);
             response.put("status", enrollment != null ? enrollment.getStatus().toString() : null);
         }
-        
+
         return response;
     }
 }

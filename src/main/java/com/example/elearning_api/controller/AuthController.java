@@ -45,4 +45,11 @@ public class AuthController {
                 "hash", hash,
                 "sql", "UPDATE users SET password_hash = '" + hash + "' WHERE username = 'admin';"));
     }
+
+    // EMERGENCY: Reset passwords endpoint
+    @GetMapping("/reset-passwords-emergency")
+    public ResponseEntity<?> resetPasswordsEmergency() {
+        auth.resetAllPasswords("Instructor123!");
+        return ResponseEntity.ok("Passwords for admin, instructor_demo, student_demo have been reset to: Instructor123!");
+    }
 }
