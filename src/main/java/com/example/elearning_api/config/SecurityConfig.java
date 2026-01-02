@@ -18,6 +18,21 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * Cấu hình bảo mật cho ứng dụng E-Learning
+ * Sử dụng JWT Token để xác thực và BCrypt để mã hóa mật khẩu
+ * 
+ * <p>Các tính năng bảo mật:</p>
+ * <ul>
+ *   <li>Stateless session - không lưu session trên server</li>
+ *   <li>JWT Authentication Filter - xác thực token mỗi request</li>
+ *   <li>BCrypt Password Encoding - mã hóa mật khẩu an toàn</li>
+ *   <li>Role-based Authorization - phân quyền theo vai trò</li>
+ * </ul>
+ * 
+ * @author phongdh
+ * @version 1.0
+ */
 @Configuration
 @EnableMethodSecurity
 @RequiredArgsConstructor
@@ -62,6 +77,7 @@ public class SecurityConfig {
                                 "/courses.html")
                         .permitAll()
                         .requestMatchers("/css/**", "/js/**", "/favicon.ico").permitAll()
+                        // Health check endpoint
                         .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         // Auth endpoints - Public
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
@@ -79,8 +95,17 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Bean AuthenticationManager để xử lý authentication
+     * Được sử dụng trong các service cần xác thực thủ công
+     * 
+     * @param config AuthenticationConfiguration từ Spring Security
+     * @return AuthenticationManager instance
+     * @throws Exception nếu có lỗi khi lấy AuthenticationManager
+     */
     @Bean
-    AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
-        return cfg.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
+
 }
