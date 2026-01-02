@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="vi" data-bs-theme="dark">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Dashboard - E-Learning</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/style.css" />
+
+  <style>
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 260px;
+      background: linear-gradient(180deg, #1e1e2f 0%, #27293d 100%);
+      padding: 0;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+
+    .sidebar-brand {
+      padding: 25px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .sidebar-brand h4 {
+      margin: 0;
+      color: #fff;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-nav {
+      padding: 20px 0;
+    }
+
+    .nav-item {
+      margin: 5px 15px;
+    }
+
+    .nav-link {
+      color: rgba(255, 255, 255, 0.7);
+      padding: 12px 20px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      transform: translateX(5px);
+    }
+
+    .nav-link.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .nav-link i {
+      font-size: 20px;
+      width: 24px;
+    }
+
+    .main-content {
+      margin-left: 260px;
+      padding: 0;
+      min-height: 100vh;
+      background: #f8f9fa;
+    }
+
+    .topbar {
+      background: #fff;
+      padding: 20px 30px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+    }
+
+    .content-wrapper {
+      padding: 30px;
+    }
+
+    .stat-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      transition: transform 0.3s, box-shadow 0.3s;
+      border: none;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 15px;
+    }
+
+    .stat-icon.purple {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+    }
+
+    .stat-icon.green {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: #fff;
+    }
+
+    .stat-icon.orange {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: #fff;
+    }
+
+    .stat-icon.blue {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: #fff;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      color: #7f8c8d;
+      font-size: 14px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .table-card {
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .table-card .card-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 20px 25px;
+      border: none;
+      font-weight: 600;
+    }
+
+    .table {
+      margin: 0;
+    }
+
+    .table thead {
+      background: #f8f9fa;
+    }
+
+    .table thead th {
+      border: none;
+      color: #2c3e50;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      padding: 15px;
+    }
+
+    .table tbody tr {
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.2s;
+    }
+
+    .table tbody tr:hover {
+      background: #f8f9fa;
+    }
+
+    .badge-role {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .btn-action {
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <h4>
+        <i class="bi bi-shield-fill-check"></i>
+        <span>Admin Panel</span>
+      </h4>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link active" href="#/statistics">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#/users">
+            <i class="bi bi-people-fill"></i>
+            <span>Quản lý Users</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#/courses">
+            <i class="bi bi-book-fill"></i>
+            <span>Quản lý Courses</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/">
+            <i class="bi bi-house-fill"></i>
+            <span>Trang chủ</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div style="position: absolute; bottom: 20px; left: 0; right: 0; padding: 0 20px;">
+      <button onclick="logout()" class="btn btn-outline-danger w-100">
+        <i class="bi bi-box-arrow-right"></i> Đăng xuất
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <div class="topbar">
+      <h3 class="mb-0 fw-bold" id="pageTitle">Dashboard</h3>
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-muted" id="currentTime"></span>
+        <div class="badge bg-success">Admin</div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content-wrapper">
+      <!-- Statistics View -->
+      <section id="view-statistics" class="view active">
+        <div class="row g-4 mb-4">
+          <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+              <div class="stat-icon purple">
+                <i class="bi bi-people-fill"></i>
+              </div>
+              <div class="stat-value" id="totalUsers">0</div>
+              <div class="stat-label">Tổng Users</div>
+            </div>
+          </div>
+
+          <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+              <div class="stat-icon green">
+                <i class="bi bi-book-fill"></i>
+              </div>
+              <div class="stat-value" id="totalCourses">0</div>
+              <div class="stat-label">Tổng Courses</div>
+            </div>
+          </div>
+
+          <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+              <div class="stat-icon orange">
+                <i class="bi bi-person-check-fill"></i>
+              </div>
+              <div class="stat-value" id="activeEnrollments">0</div>
+              <div class="stat-label">Đăng ký Active</div>
+            </div>
+          </div>
+
+          <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+              <div class="stat-icon blue">
+                <i class="bi bi-currency-dollar"></i>
+              </div>
+              <div class="stat-value" id="totalRevenue">0₫</div>
+              <div class="stat-label">Tổng Doanh Thu</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12">
+            <div class="table-card">
+              <div class="card-header">
+                <i class="bi bi-graph-up me-2"></i>Biểu đồ Doanh Thu
+              </div>
+              <div class="card-body p-4">
+                <canvas id="revenueChart" height="80"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Users View -->
+      <section id="view-users" class="view">
+        <div class="table-card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>
+              <i class="bi bi-people-fill me-2"></i>Quản Lý Users
+            </span>
+            <span class="badge bg-light text-dark" id="userCount">0 users</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th style="width: 60px">ID</th>
+                    <th>Username</th>
+                    <th>Full Name</th>
+                    <th style="width: 150px">Role</th>
+                    <th style="width: 120px">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="usersList">
+                  <tr>
+                    <td colspan="5" class="text-center py-5">
+                      <div class="spinner-border text-primary"></div>
+                      <p class="text-muted mt-2">Loading...</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Courses View -->
+      <section id="view-courses" class="view">
+        <div class="table-card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>
+              <i class="bi bi-book-fill me-2"></i>Quản Lý Courses
+            </span>
+            <span class="badge bg-light text-dark" id="courseCount">0 courses</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th style="width: 60px">ID</th>
+                    <th>Title</th>
+                    <th>Instructor</th>
+                    <th style="width: 150px">Price</th>
+                    <th style="width: 150px">Status</th>
+                    <th style="width: 120px">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="coursesList">
+                  <tr>
+                    <td colspan="6" class="text-center py-5">
+                      <div class="spinner-border text-primary"></div>
+                      <p class="text-muted mt-2">Loading...</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    window.API_BASE = "";
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+
+</html>

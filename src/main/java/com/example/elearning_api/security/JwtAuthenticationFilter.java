@@ -1,6 +1,6 @@
 package com.example.elearning_api.security;
 
-import com.example.elearning_api.repository.UserRepo;
+import com.example.elearning_api.repository.UserRepository;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -20,27 +20,39 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
-@Component @RequiredArgsConstructor
+// Đánh dấu là component (Spring tự scan và tạo bean), và tạo constructor với fields required.
+@Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtService jwt ;
-    private final UserRepo users ;
-    @Override
-    protected void doFilterInternal (HttpServletRequest req , HttpServletResponse res , FilterChain chain)
-    throws ServletException, IOException {
+    private final JwtService jwt; // Inject JwtService để parse/generate token.
+    private final UserRepository users;
+
+    @Override // Method xử lý filter: Nhận request, response, chain.
+    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
+            throws ServletException, IOException {
         // Bỏ qua nếu đã có Authentication (tránh set 2 lần)
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) { // Kiểm tra nếu chưa có auth trong context
+                                                                              // (tránh duplicate set)
             String header = req.getHeader(HttpHeaders.AUTHORIZATION);
 
-            if (header != null && header.startsWith("Bearer ")) {
-                String token = header.substring(7).trim(); // TRIM để tránh case xuống dòng
+            if (header != null && header.startsWith("Bearer ")) { // Kiểm tra nếu header tồn tại và bắt đầu bằng "Bearer
+                                                                  // " (chuẩn JWT).
+                String token = header.substring(7).trim(); // TRIM để tránh case xuống dòng // Extract token bằng cách
+                                                           // cắt từ vị trí 7 (sau "Bearer "), và trim whitespace.
 
                 try {
-                    String username = jwt.extractSubject(token); // subject = username
+                    String username = jwt.extractSubject(token);
                     if (username != null) {
                         users.findByUsername(username).ifPresent(u -> {
-                            // QUYỀN phải có prefix "ROLE_"
-                            var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + u.getRole().name()));
-                            var auth = new UsernamePasswordAuthenticationToken(u.getUsername(), null, authorities);
+                            // FIX: Tạo UserPrincipal thay vì chỉ dùng username
+                            UserPrincipal principal = new UserPrincipal(u);
+
+                            // Set principal object (UserPrincipal) vào auth token
+                            var auth = new UsernamePasswordAuthenticationToken(
+                                    principal, // ← Principal object, KHÔNG phải username string
+                                    null,
+                                    principal.getAuthorities());
+
                             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
                             SecurityContextHolder.getContext().setAuthentication(auth);
                         });
@@ -51,7 +63,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        // Luôn gọi tiếp filter chain đúng 1 lần
-        chain.doFilter(req, res);
+        chain.doFilter(req, res);// Chuyển tiếp request đến filter tiếp theo hoặc controller, dù có auth hay
+                                 // không.
+
     }
 }

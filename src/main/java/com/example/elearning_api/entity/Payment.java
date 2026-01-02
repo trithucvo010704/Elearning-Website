@@ -1,70 +1,122 @@
 package com.example.elearning_api.entity;
 
-                            // enum nhà cung cấp
 import com.example.elearning_api.Enum.PaymentStatus;
 import com.example.elearning_api.Enum.Provider;
-import jakarta.persistence.*;                                              // import JPA
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@Entity                                                                    // đánh dấu entity
-@Table(                                                                    // cấu hình bảng
-        name = "payments",                                                       // tên bảng
+@Entity
+@Table(
+        name = "payments",
         indexes = {
-                @Index(name = "idx_pay_user_course",    columnList = "user_id, course_id"),  // tìm theo user+course
-                @Index(name = "idx_pay_status_created", columnList = "status, created_at"),  // thống kê theo trạng thái
-                @Index(name = "idx_pay_order_created",  columnList = "order_id, created_at") // truy vết theo order/time
+                @Index(name = "idx_pay_user_course", columnList = "user_id, course_id"),
+                @Index(name = "idx_pay_status_created", columnList = "status, created_at"),
+                @Index(name = "idx_pay_order_created", columnList = "order_id, created_at")
         }
 )
-public class Payment extends BaseEntity {                                   // entity kế thừa BaseEntity
+public class Payment extends BaseEntity {
 
+        // ===================== RELATIONS =====================
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)                       // thanh toán thuộc user
-    @JoinColumn(name = "user_id", nullable = false,                            // map FK user_id
-            foreignKey = @ForeignKey(name = "fk_pay_user"))                          // tên FK
-    private User user;                                                         // quan hệ User
+        @ManyToOne(fetch = FetchType.LAZY, optional = false)
+        @JoinColumn(
+                name = "user_id",
+                nullable = false,
+                foreignKey = @ForeignKey(name = "fk_pay_user")
+        )
+        private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)                       // thanh toán gắn với course
-    @JoinColumn(name = "course_id", nullable = false,                          // map FK course_id
-            foreignKey = @ForeignKey(name = "fk_pay_course"))                        // tên FK
-    private Course course;                                                     // quan hệ Course
+        @ManyToOne(fetch = FetchType.LAZY, optional = false)
+        @JoinColumn(
+                name = "course_id",
+                nullable = false,
+                foreignKey = @ForeignKey(name = "fk_pay_course")
+        )
+        private Course course;
 
-    @ManyToOne(fetch = FetchType.LAZY)                                         // có thể null
-    @JoinColumn(name = "enrollment_id", foreignKey = @ForeignKey(name = "fk_pay_enrollment")) // map enrollment
-    private Enrollment enrollment;                                             // quan hệ Enrollment
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(
+                name = "enrollment_id",
+                foreignKey = @ForeignKey(name = "fk_pay_enrollment")
+        )
+        private Enrollment enrollment;
 
-    @ManyToOne(fetch = FetchType.LAZY)                                         // có thể null
-    @JoinColumn(name = "order_id", foreignKey = @ForeignKey(name = "fk_pay_order")) // map order
-    private Order order;                                                       // quan hệ Order
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(
+                name = "order_id",
+                foreignKey = @ForeignKey(name = "fk_pay_order")
+        )
+        private Order order;
 
-    @Column(name = "stripe_session_id", unique = true)                         // id phiên checkout
-    private String stripeSessionId;                                            // cột stripe_session_id
+        // ===================== STRIPE FIELDS =====================
 
-    @Column(name = "stripe_payment_intent", unique = true)                     // id intent
-    private String stripePaymentIntent;                                        // cột stripe_payment_intent
+        @Column(name = "stripe_session_id", unique = true)
+        private String stripeSessionId;
 
-    @Column(name = "stripe_event_id", unique = true)                           // id sự kiện webhook
-    private String stripeEventId;                                              // cột stripe_event_id
+        @Column(name = "stripe_payment_intent", unique = true)
+        private String stripePaymentIntent;
 
-    @Column(name = "amount_cents", nullable = false)                           // số tiền cent
-    private Integer amountCents;                                               // cột amount_cents
+        @Column(name = "stripe_event_id", unique = true)
+        private String stripeEventId;
 
-    @Column(nullable = false, length = 10)                                     // đơn vị tiền tệ
-    private String currency = "USD";                                           // cột currency
+        // ===================== COMMON PAYMENT FIELDS =====================
 
-    @Enumerated(EnumType.STRING)                                               // enum STRING
-    @Column(nullable = false, length = 16)                                     // cột provider
-    private Provider provider = Provider.STRIPE;                               // mặc định STRIPE
+        @Column(name = "amount_cents", nullable = false)
+        private Long amountCents = 0L;
 
-    @Column(length = 64)                                                       // phương thức (card, momo…)
-    private String method;                                                     // cột method
+        public long getAmount() {
+                return amountCents;
+        }
 
-    @Column(name = "refunded_amount_cents", nullable = false)                  // số tiền đã hoàn
-    private Integer refundedAmountCents = 0;                                   // cột refunded_amount_cents
+        @Column(nullable = false, length = 10)
+        private String currency = "USD";
 
-    @Enumerated(EnumType.STRING)                                               // enum STRING
-    @Column(nullable = false, length = 16)                                     // cột status
-    private PaymentStatus status;                                              // trạng thái thanh toán
+        @Enumerated(EnumType.STRING)
+        @Column(nullable = false, length = 16)
+        private Provider provider = Provider.STRIPE;
+
+        @Column(length = 64)
+        private String method;
+
+        @Column(name = "refunded_amount_cents", nullable = false)
+        private Integer refundedAmountCents = 0;
+
+        @Enumerated(EnumType.STRING)
+        @Column(nullable = false, length = 16)
+        private PaymentStatus status;
+
+        // ===================== VNPAY FIELDS =====================
+
+        /**
+         * vnp_TxnRef - mã tham chiếu đơn hàng bên phía merchant
+         */
+        @Column(name = "vnp_txn_ref", length = 64)
+        private String vnpTxnRef;
+
+        /**
+         * vnp_TransactionNo - mã giao dịch VNPAY (trả về trong callback)
+         */
+        @Column(name = "vnp_transaction_no", length = 64)
+        private String vnpTransactionNo;
+
+        /**
+         * vnp_ResponseCode - mã kết quả giao dịch (00 = thành công)
+         */
+        @Column(name = "vnp_response_code", length = 16)
+        private String vnpResponseCode;
+
+        /**
+         * vnp_BankCode - mã ngân hàng thanh toán
+         */
+        @Column(name = "vnp_bank_code", length = 32)
+        private String vnpBankCode;
+
+        /**
+         * vnp_SecureHash - chữ ký VNPAY (nếu muốn lưu lại raw)
+         */
+        @Column(name = "vnp_secure_hash", length = 256)
+        private String vnpSecureHash;
 }

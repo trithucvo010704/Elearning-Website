@@ -37,101 +37,61 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private final JwtAuthenticationFilter jwtFilter;// Field: Filter tùy chỉnh để kiểm tra JWT token trong request.
+    private final UserDetailsService uds; // Field: Service để load chi tiết user từ database (implement
+                                          // UserDetailsService).
 
-    /**
-     * JWT Authentication Filter để xử lý token trong mỗi request
-     */
-    private final JwtAuthenticationFilter jwtFilter;
-
-    /**
-     * Service để load thông tin user từ database
-     */
-    private final UserDetailsService uds;
-
-    /**
-     * Bean mã hóa mật khẩu sử dụng BCrypt
-     * BCrypt tự động thêm salt và có độ phức tạp có thể điều chỉnh
-     * 
-     * @return PasswordEncoder instance sử dụng BCrypt algorithm
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
+    @Bean // Trả về BCryptPasswordEncoder, một thuật toán mã hóa mật khẩu an toàn (hash +
+          // salt).
+    PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * Cấu hình Authentication Provider sử dụng DAO
-     * Kết hợp UserDetailsService và PasswordEncoder để xác thực
-     * 
-     * @return DaoAuthenticationProvider đã được cấu hình
-     */
-    @Bean
-    public DaoAuthenticationProvider authProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setPasswordEncoder(passwordEncoder());
-        authProvider.setUserDetailsService(uds);
-        return authProvider;
+    @Bean // dùng để xác thực user từ database.
+    DaoAuthenticationProvider authProvider() {
+        var dap = new DaoAuthenticationProvider();// Tạo instance của DaoAuthenticationProvider.
+        dap.setPasswordEncoder(passwordEncoder()); // Set encoder để so sánh mật khẩu (sử dụng bean passwordEncoder ở
+                                                   // trên).
+        dap.setUserDetailsService(uds);// Set service để load user (uds là UserDetailsService inject qua constructor).
+        return dap;
     }
 
-    /**
-     * Cấu hình Security Filter Chain
-     * Định nghĩa các rule bảo mật cho từng endpoint
-     * 
-     * <p>Public endpoints (không cần xác thực):</p>
-     * <ul>
-     *   <li>GET /, /index.html, /auth.html - Trang tĩnh</li>
-     *   <li>GET /css/**, /js/**, /favicon.ico - Static resources</li>
-     *   <li>GET /actuator/health - Health check</li>
-     *   <li>POST /api/auth/register, /api/auth/login - Đăng ký, đăng nhập</li>
-     * </ul>
-     * 
-     * <p>Protected endpoints: Tất cả các endpoint còn lại yêu cầu JWT token hợp lệ</p>
-     * 
-     * @param http HttpSecurity object để cấu hình
-     * @return SecurityFilterChain đã được cấu hình
-     * @throws Exception nếu có lỗi trong quá trình cấu hình
-     */
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                // Tắt CSRF vì sử dụng JWT (stateless)
-                .csrf(csrf -> csrf.disable())
-
-                // Cấu hình stateless session - không tạo session
-                .sessionManagement(session -> 
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-
-                // Xử lý exception: 401 Unauthorized, 403 Forbidden
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint((request, response, authException) -> 
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
-                        )
-                        .accessDeniedHandler((request, response, accessDeniedException) -> 
-                                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied")
-                        )
-                )
-
-                // Cấu hình authorization cho các endpoints
-                .authorizeHttpRequests(authorize -> authorize
-                        // Public static pages
-                        .requestMatchers("/", "/index.html", "/auth.html").permitAll()
-                        // Public static resources
+    @Bean // Bean chính: SecurityFilterChain, định nghĩa toàn bộ chuỗi filter bảo mật.
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.csrf(csrf -> csrf.disable()) // Tắt CSRF vì ứng dụng stateless (JWT), không cần token CSRF.
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Set policy
+                                                                                                    // session là
+                                                                                                    // stateless: Không
+                                                                                                    // tạo session, dùng
+                                                                                                    // JWT thay thế.
+                // Quan trọng: trả 401 khi thiếu token, 403 khi thiếu quyền
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                        .accessDeniedHandler((req, res, e) -> res.sendError(HttpServletResponse.SC_FORBIDDEN)))
+                .authorizeHttpRequests(auth -> auth
+                        // Static pages - ALL PUBLIC (protection via JavaScript guards)
+                        .requestMatchers("/", "/index.html",
+                                "/auth.html", "/course.html", "/admin.html", "/api/auth/**",
+                                "/api/payment/vnpay/return",
+                                "/api/payment/vnpay/ipn",
+                                "/courses.html")
+                        .permitAll()
                         .requestMatchers("/css/**", "/js/**", "/favicon.ico").permitAll()
                         // Health check endpoint
                         .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
-                        // Public auth endpoints - CHỈ register và login
+                        // Auth endpoints - Public
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
-                        // Tất cả request khác yêu cầu xác thực
-                        .anyRequest().authenticated()
-                )
-
-                // Đăng ký authentication provider
+                        .requestMatchers("/api/auth/hash/**").permitAll()
+                        // Public APIs - Không cần authentication
+                        .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
+                        // Chat API - Public
+                        .requestMatchers("/api/chat/**").permitAll()
+                        // All other requests require authentication
+                        .anyRequest().authenticated())
                 .authenticationProvider(authProvider())
-
-                // Thêm JWT filter trước UsernamePasswordAuthenticationFilter
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);// Thêm filter JWT trước filter
+                                                                                        // mặc định của Spring để kiểm
+                                                                                        // tra token sớm.
         return http.build();
     }
 

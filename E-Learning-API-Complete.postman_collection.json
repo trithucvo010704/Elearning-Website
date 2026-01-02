@@ -1,0 +1,979 @@
+{
+  "info": {
+    "_postman_id": "elearning-api-complete-test",
+    "name": "E-Learning API - Complete Test Flow",
+    "description": "Test tất cả API theo thứ tự logic: Auth → Admin → Courses → Lessons → Paywall",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "1.1 Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has token\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.token).to.exist;",
+                  "    pm.environment.set(\"ADMIN_TOKEN\", jsonData.token);",
+                  "    pm.environment.set(\"ADMIN_ID\", jsonData.user.id);",
+                  "    console.log(\"Admin Token:\", jsonData.token);",
+                  "});",
+                  "",
+                  "pm.test(\"User role is ADMIN\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.user.role).to.eql(\"ADMIN\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login với tài khoản admin có sẵn trong database"
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Register Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Save student token\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"STUDENT_TOKEN\", jsonData.token);",
+                  "    pm.environment.set(\"STUDENT_ID\", jsonData.user.id);",
+                  "    console.log(\"Student ID:\", jsonData.user.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"student_new\",\n  \"password\": \"Student123!\",\n  \"fullName\": \"New Student\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/register",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Đăng ký student mới"
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Register Instructor (as STUDENT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Save instructor candidate ID\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"INSTRUCTOR_CANDIDATE_ID\", jsonData.user.id);",
+                  "    pm.environment.set(\"INSTRUCTOR_TOKEN_TEMP\", jsonData.token);",
+                  "    console.log(\"Instructor Candidate ID:\", jsonData.user.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"instructor_new\",\n  \"password\": \"Instructor123!\",\n  \"fullName\": \"New Instructor\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/register",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Đăng ký user mới (chưa là INSTRUCTOR, sẽ promote sau)"
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 Get My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Profile has user data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.user).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/me",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Xem profile của user đang login"
+          },
+          "response": []
+        }
+      ],
+      "description": "APIs liên quan đến authentication"
+    },
+    {
+      "name": "2. Admin - User Management",
+      "item": [
+        {
+          "name": "2.1 Get All Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users"]
+            },
+            "description": "Admin xem tất cả users"
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 Promote User to INSTRUCTOR",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"User role updated to INSTRUCTOR\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.role).to.eql(\"INSTRUCTOR\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Login lại instructor để lấy token mới với role INSTRUCTOR",
+                  "setTimeout(function(){}, 500);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"INSTRUCTOR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users/{{INSTRUCTOR_CANDIDATE_ID}}/role",
+              "host": ["{{BASE_URL}}"],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{INSTRUCTOR_CANDIDATE_ID}}",
+                "role"
+              ]
+            },
+            "description": "Admin promote user lên INSTRUCTOR"
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 Login Instructor (Get New Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Save instructor token\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"INSTRUCTOR_TOKEN\", jsonData.token);",
+                  "    console.log(\"Instructor Token (with INSTRUCTOR role):\", jsonData.token);",
+                  "});",
+                  "",
+                  "pm.test(\"Role is INSTRUCTOR\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.user.role).to.eql(\"INSTRUCTOR\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"instructor_new\",\n  \"password\": \"Instructor123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login lại để lấy token mới với role INSTRUCTOR"
+          },
+          "response": []
+        },
+        {
+          "name": "2.4 Get All Instructors",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/instructors",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "instructors"]
+            },
+            "description": "Admin xem danh sách instructors"
+          },
+          "response": []
+        }
+      ],
+      "description": "Admin quản lý users"
+    },
+    {
+      "name": "3. Courses",
+      "item": [
+        {
+          "name": "3.1 Instructor Create Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Save course ID\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"COURSE_ID\", jsonData.id);",
+                  "    console.log(\"Course ID:\", jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{INSTRUCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Java Spring Boot Complete Course\",\n  \"description\": \"Learn Spring Boot from beginner to advanced level\",\n  \"priceCents\": 99000,\n  \"currency\": \"VND\",\n  \"thumbnailUrl\": \"https://example.com/thumbnails/spring-boot.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/courses",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "courses"]
+            },
+            "description": "Instructor tạo course mới"
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 Get All Courses (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/courses",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "courses"]
+            },
+            "description": "Public API - Xem tất cả courses"
+          },
+          "response": []
+        },
+        {
+          "name": "3.3 Get My Courses (Instructor)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{INSTRUCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/courses?mine=true",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "courses"],
+              "query": [
+                {
+                  "key": "mine",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Instructor xem courses của mình"
+          },
+          "response": []
+        },
+        {
+          "name": "3.4 Update Course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{INSTRUCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Java Spring Boot Complete Course - Updated\",\n  \"description\": \"Learn Spring Boot - Updated content\",\n  \"priceCents\": 120000,\n  \"currency\": \"VND\",\n  \"thumbnailUrl\": \"https://example.com/thumbnails/spring-boot-v2.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/courses/{{COURSE_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "courses", "{{COURSE_ID}}"]
+            },
+            "description": "Owner update course"
+          },
+          "response": []
+        }
+      ],
+      "description": "CRUD operations cho courses"
+    },
+    {
+      "name": "4. Lessons",
+      "item": [
+        {
+          "name": "4.1 Create Lesson - Free Preview",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Save free lesson ID\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"LESSON_FREE_ID\", jsonData.id);",
+                  "    console.log(\"Free Lesson ID:\", jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{INSTRUCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Lesson 1: Introduction to Spring Boot\",\n  \"youtubeVideoId\": \"vtPkZShrvXQ\",\n  \"orderIndex\": 1,\n  \"durationSec\": 600,\n  \"freePreview\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/courses/{{COURSE_ID}}/lessons/manual",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "courses", "{{COURSE_ID}}", "lessons", "manual"]
+            },
+            "description": "Tạo lesson free preview"
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 Create Lesson - Paid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Save paid lesson ID\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"LESSON_PAID_ID\", jsonData.id);",
+                  "    console.log(\"Paid Lesson ID:\", jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{INSTRUCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Lesson 2: Spring Boot Configuration\",\n  \"youtubeVideoId\": \"9SGDpanrc8U\",\n  \"orderIndex\": 2,\n  \"durationSec\": 900,\n  \"freePreview\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/courses/{{COURSE_ID}}/lessons/manual",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "courses", "{{COURSE_ID}}", "lessons", "manual"]
+            },
+            "description": "Tạo lesson paid (freePreview = false)"
+          },
+          "response": []
+        },
+        {
+          "name": "4.3 Get All Lessons (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/courses/{{COURSE_ID}}/lessons",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "courses", "{{COURSE_ID}}", "lessons"]
+            },
+            "description": "Public - Xem danh sách lessons"
+          },
+          "response": []
+        }
+      ],
+      "description": "Quản lý lessons"
+    },
+    {
+      "name": "5. Video Access & Paywall",
+      "item": [
+        {
+          "name": "5.1 Student Watch Free Lesson (OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Can watch is true\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.canWatch).to.be.true;",
+                  "    pm.expect(jsonData.embedUrl).to.exist;",
+                  "    console.log(\"Student can watch free lesson ✅\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/lessons/{{LESSON_FREE_ID}}/embed?courseId={{COURSE_ID}}&origin=http://localhost:3000",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "lessons", "{{LESSON_FREE_ID}}", "embed"],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{COURSE_ID}}"
+                },
+                {
+                  "key": "origin",
+                  "value": "http://localhost:3000"
+                }
+              ]
+            },
+            "description": "Student xem free lesson - PHẢI OK"
+          },
+          "response": []
+        },
+        {
+          "name": "5.2 Student Watch Paid Lesson (PAYWALL)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Can watch is false (PAYWALL)\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.canWatch).to.be.false;",
+                  "    pm.expect(jsonData.embedUrl).to.be.null;",
+                  "    console.log(\"Student CANNOT watch paid lesson ❌ (Paywall working!)\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{STUDENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/lessons/{{LESSON_PAID_ID}}/embed?courseId={{COURSE_ID}}&origin=http://localhost:3000",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "lessons", "{{LESSON_PAID_ID}}", "embed"],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{COURSE_ID}}"
+                },
+                {
+                  "key": "origin",
+                  "value": "http://localhost:3000"
+                }
+              ]
+            },
+            "description": "Student xem paid lesson - PHẢI BỊ CHẶN (paywall)"
+          },
+          "response": []
+        },
+        {
+          "name": "5.3 Instructor Watch Paid Lesson (OK - Owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Owner can watch paid lesson\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.canWatch).to.be.true;",
+                  "    pm.expect(jsonData.embedUrl).to.exist;",
+                  "    console.log(\"Instructor (owner) can watch paid lesson ✅\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{INSTRUCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/lessons/{{LESSON_PAID_ID}}/embed?courseId={{COURSE_ID}}&origin=http://localhost:3000",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "lessons", "{{LESSON_PAID_ID}}", "embed"],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "{{COURSE_ID}}"
+                },
+                {
+                  "key": "origin",
+                  "value": "http://localhost:3000"
+                }
+              ]
+            },
+            "description": "Owner xem paid lesson - PHẢI OK"
+          },
+          "response": []
+        }
+      ],
+      "description": "Test paywall - quan trọng nhất!"
+    },
+    {
+      "name": "6. Admin - Course Management",
+      "item": [
+        {
+          "name": "6.1 Admin Get All Courses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/courses",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "courses"]
+            },
+            "description": "Admin xem tất cả courses"
+          },
+          "response": []
+        },
+        {
+          "name": "6.2 Admin Get Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/statistics",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "statistics"]
+            },
+            "description": "Thống kê tổng quan"
+          },
+          "response": []
+        }
+      ],
+      "description": "Admin quản lý courses và xem statistics"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ]
+}

@@ -2,22 +2,17 @@ package com.example.elearning_api.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Data
-public class AuthRespone {
+@NoArgsConstructor
+@AllArgsConstructor
+public class AuthResponse {
     private String token;
     private UserDto user;
 
-    public AuthRespone() {
-    }
-
-    public AuthRespone(String token, UserDto user) {
-        this.token = token;
-        this.user = user;
-    }
-
-    @Getter
+    @Data
+    @NoArgsConstructor
     @AllArgsConstructor
     public static class UserDto {
         private Long id;
